@@ -221,3 +221,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+#debris file created due to permission_error file execution
+readonly.txt
