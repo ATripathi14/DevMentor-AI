@@ -6,5 +6,5 @@ dict1 = [
 ]
 
 # print(dict1[1]["e"]) # KeyError
-print(dict1[1]["d"])
-# print(dict1[0]["d"]) # KeyError
+# print(dict1[1]["d"])
+print(dict1[0]["d"]) # KeyError
