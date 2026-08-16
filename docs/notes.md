@@ -1,0 +1,32 @@
+Day 1 — Environment + Git setup
+
+1. Set up the devmentor conda environment , confirmed python and conda work cleanly.
+2. Created the project folder structure and initialized the Git repo.
+3. Wrote the first README and pushed the initial commit to github.com/ATripathi14/DevMentor-AI.
+
+
+Day 2 — 12 broken scripts (labeled dataset)
+
+1. Wrote one deliberately broken script per error category: syntax_error, type_error, none_type_error, key_error, index_error, attribute_error, module_not_found, file_not_found, permission_error, value_error, network_error, other_error.
+2. Ran each one and read the traceback to confirm it actually raises the intended exception (not a different one by accident).
+3. Committed and pushed to main — they're the ground for the TF-IDF training data later in Phase 3.
+
+
+Day 3 — Building the error capturer (client/runner.py)
+
+1. Reading subprocess.run() docs — focusing only on capture_output, text, returncode.
+2. Writing get_output_error(script_path): runs a script, returns stderr as a string on failure, None on success.
+3. Windows/conda note: shelling out to a bare "python" string relies on whatever python resolves to on PATH, which may not match the active conda environment. Using sys.executable which instead guarantees the subprocess runs with the exact same interpreter — and therefore the same environment — that the script is already running in.
+
+Key Points learned :
+   
+    used sys.executable instead of python becuase "python" relies on PATH search order to guess the right interpreter — risky when multiple Pythons exist on a machine. "sys.executable" always points to the exact interpreter currently running your code, so it's guaranteed correct regardless of environment or machine.
+
+    subprocess.run() returns a CompletedProcess object, which has a returncode attribute that you can check to see if the process completed successfully or not.
+
+    "capture_output = True" tells subprocess to capture the stdout and stderr streams and store them in the CompletedProcess object's stdout and stderr attributes.
+
+    "text = True" tells subprocess to decode the stdout and stderr streams into strings, which are then stored in the CompletedProcess object's stdout and stderr attributes.
+
+4. Confirmed outputs: None returned correctly when a script runs successfully with no errors, and the correct stderr string returned when a script fails — tested against 3 broken scripts and 1 working script
+    
