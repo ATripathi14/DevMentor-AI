@@ -29,4 +29,6 @@ Key Points learned :
     "text = True" tells subprocess to decode the stdout and stderr streams into strings, which are then stored in the CompletedProcess object's stdout and stderr attributes.
 
 4. Confirmed outputs: None returned correctly when a script runs successfully with no errors, and the correct stderr string returned when a script fails — tested against 3 broken scripts and 1 working script
-    
+5. Wrote parse_error(stderr_text) extracting error type and message from the final traceback line. Uses split(":", 1) to avoid breaking on messages that contain colons themselves.
+6. Built client/dmrun.py — a command-line entry point that ties everything together: run python dmrun.py python   <script>, and it captures the error, parses it, and prints the result in one step.
+7. Tested all 12 scripts through dmrun.py — found and fixed bugs that may have caused issues later on.

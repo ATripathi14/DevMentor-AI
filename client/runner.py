@@ -19,8 +19,39 @@ def get_output_error(script_path: str) -> str | None:
 
     return None
 
+
+
+def parse_error(stderr_text: str) -> tuple[str, str] | None:
+    #Extracts the error type and message from the traceback string and returns (error_type, message), or None if no error
+
+    if not stderr_text:
+        return None
+
+    lines = stderr_text.strip().splitlines()
+    last_line = lines[-1]  # in python the actual exception is always the last line
+
+    if ":" in last_line:
+        error_type, message = last_line.split(":", 1)
+        return error_type.strip(), message.strip()
+
+    return None
+
 # This only runs the code below it when the file is executed directly — not when it's imported by another file.
-if __name__ == "__main__":  
-    print(get_output_error("ml_engine/data/raw/type_error.py"))
-    print(get_output_error("ml_engine/data/raw/key_error.py"))
-    print(get_output_error("ml_engine/data/raw/index_error.py"))
+if __name__ == "__main__":
+    scripts = [
+        "ml_engine/data/raw/type_error.py",
+        "ml_engine/data/raw/key_error.py",
+        "ml_engine/data/raw/index_error.py",
+        "ml_engine/data/raw/None_Type_Error.py",
+        "test/fixtures/_working_test.py",
+
+    ]
+
+    for path in scripts:
+        error = get_output_error(path)
+        if error:
+            print(parse_error(error))
+        else:
+            print(f"{path}: No Error (ran successfully)")
+
+
