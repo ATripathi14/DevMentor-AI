@@ -3,6 +3,7 @@
 
 import sys
 import subprocess
+import hashlib
 
 def get_output_error(script_path: str) -> str | None:
     """Runs a python script and returns the stderr (std error) if it fails, or None if it succeeds.
@@ -36,6 +37,12 @@ def parse_error(stderr_text: str) -> tuple[str, str] | None:
 
     return None
 
+
+def fingerprint(error_type: str, message: str) -> str:
+    #Return a short, stable hash identifying this error
+    text = f"{error_type}:{message}"
+    return hashlib.sha256(text.encode()).hexdigest()[:12]
+
 # This only runs the code below it when the file is executed directly — not when it's imported by another file.
 if __name__ == "__main__":
     scripts = [
@@ -53,5 +60,4 @@ if __name__ == "__main__":
             print(parse_error(error))
         else:
             print(f"{path}: No Error (ran successfully)")
-
 
