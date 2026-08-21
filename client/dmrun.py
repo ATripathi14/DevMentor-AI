@@ -21,7 +21,6 @@ if __name__ == "__main__":
             if should_notify(fp):
                 print(f"{error_type}: {message}")
                 print(f"[fingerprint: {fp}]")
-                # Future: sanitize -> classify -> explain -> widget will plug in here
             else:
                 print(f"(suppressed — same error seen recently) {error_type}: {message}")
         else:
