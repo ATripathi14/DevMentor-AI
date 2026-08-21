@@ -64,6 +64,8 @@ The key feature is zero-click detection: the widget can respond before you've re
 
 ## Architecture
 
+*This shows the target end-state architecture. For the current, as-built pipeline, see [docs/architecture.md](docs/architecture.md).*
+
 ```
 Desktop Client
   dmrun wrapper / optional OCR
@@ -93,7 +95,7 @@ Privacy isn't a feature bolted on afterward — it's the core design constraint.
 
 | Mode | Default | Behavior |
 |---|---|---|
-| Local Only | ✅ Yes | No hosted API/LLM calls — rules + local ML + local history only |
+| Local Only | Yes | No hosted API/LLM calls — rules + local ML + local history only |
 | Sanitized Cloud | No | Sends only approved, re-sanitized metadata for a richer explanation |
 | Advanced Cloud | No | User-approved redacted snippets, configurable provider — still never raw screenshots |
 
@@ -110,6 +112,8 @@ Evaluation artifacts (confusion matrix, per-class F1, model card) live in `ml_en
 
 ## Tech Stack
 
+*Target stack for the full project — not everything below is wired up yet (see [Project Status](#project-status)).*
+
 | Layer | Technology |
 |---|---|
 | Language | Python |
@@ -125,27 +129,38 @@ Evaluation artifacts (confusion matrix, per-class F1, model card) live in `ml_en
 
 ## Project Status
 
-🚧 **In active development.** Currently in the Foundation → Local MVP phase of an 8-week build plan.
+**In active development.** Currently in Phase 1 (Local MVP) of an 8-week build plan.
 
-- [ ] Phase 0 — Foundation
-- [ ] Phase 1 — Local MVP (`dmrun`, local FastAPI service, floating widget)
-- [ ] Phase 2 — Privacy Layer (sanitizer, risk scoring, Local-Only mode)
-- [ ] Phase 3 — ML Engine (dataset, TF-IDF baseline, macro F1 evaluation)
+- [x] Phase 0 — Foundation (environment, Git, 12 broken scripts, error anatomy)
+- [ ] Phase 1 — Local MVP (in progress)
+  - [x] `dmrun` wrapper: captures and parses errors via subprocess
+  - [x] Error fingerprinting + debounce (persisted across runs)
+  - [ ] Local FastAPI service (`/analyze` endpoint)
+  - [ ] Floating widget (PySide6)
+- [ ] Phase 2 — Privacy Layer
+- [ ] Phase 3 — ML Engine
 - [ ] Phase 4 — UX polish + optional OCR
 - [ ] Phase 5 — Cloud assist & productization *(stretch)*
 
 ## Getting Started
 
-> Setup instructions will be filled in as Phase 0/1 land — environment setup, `dmrun` usage, and how to run the local service.
-
 ```bash
-# placeholder — coming in Phase 0
 git clone https://github.com/ATripathi14/DevMentor-AI.git
 cd DevMentor-AI
 conda create -n devmentor python=3.11
 conda activate devmentor
-pip install -r requirements.txt
+pip install -e .
 ```
+
+**Try it out:**
+
+```bash
+python client/dmrun.py python ml_engine/data/raw/Key_Error.py
+```
+
+This runs the script through `dmrun`, captures the resulting error, and prints its type and message to the console. If you run the same broken script again within 60 seconds, the repeat is automatically suppressed rather than printed again — this is the debounce logic in action.
+
+> The local FastAPI service and floating widget are next up in Phase 1.
 
 ## Roadmap
 
@@ -175,4 +190,4 @@ DevMentor-AI/
 
 ---
 
-*Built as a demonstration of applied ML + privacy-conscious systems design — not a ChatGPT wrapper.*
+*A work in progress, built one phase at a time — see [Project Status](#project-status) for what's actually working right now.*
