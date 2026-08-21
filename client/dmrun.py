@@ -1,5 +1,5 @@
 import sys
-from runner import get_output_error, parse_error
+from runner import get_output_error, parse_error, fingerprint, should_notify
 
 if __name__ == "__main__":
     args = sys.argv[1:]
@@ -16,7 +16,14 @@ if __name__ == "__main__":
         result = parse_error(error)  # pull out just the error type + message
         if result:
             error_type, message = result
-            print(f"{error_type}: {message}")
+            fp = fingerprint(error_type, message)  # unique ID for this specific error
+
+            if should_notify(fp):
+                print(f"{error_type}: {message}")
+                print(f"[fingerprint: {fp}]")
+                # Future: sanitize -> classify -> explain -> widget will plug in here
+            else:
+                print(f"(suppressed — same error seen recently) {error_type}: {message}")
         else:
             print("An error occurred but could not be parsed.")
     else:
