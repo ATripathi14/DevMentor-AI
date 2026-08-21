@@ -32,3 +32,18 @@ Key Points learned :
 5. Wrote parse_error(stderr_text) extracting error type and message from the final traceback line. Uses split(":", 1) to avoid breaking on messages that contain colons themselves.
 6. Built client/dmrun.py — a command-line entry point that ties everything together: run python dmrun.py python   <script>, and it captures the error, parses it, and prints the result in one step.
 7. Tested all 12 scripts through dmrun.py — found and fixed bugs that may have caused issues later on.
+
+
+Day 4 — Fingerprinting and Debounce
+
+- fingerprint(error_type, message): returns a short (12-char) hash uniquely and stably identifying an error.
+Same inputs -> same hash, every time. Used as a compact ID instead of comparing raw error text.
+
+- should_notify(fp, window_seconds=60): returns False if the same fingerprint was seen within the last 
+window_seconds (suppress repeat notification); otherwise records the current time and returns True.
+
+- Debounce state (fingerprint->last_seen_timestamp) is persisted to client/.debounce_state.json instead of an in-memory dict.  Reason: dmrun.py exits after every run , so an in-memory dict would reset to empty each invocation, making debounce 
+never actually suppress anything across separate runs. Persisting to disk lets state survive between runs.
+
+- .debounce_state.json is auto-created on first write, never created manually, and is gitignored 
+(runtime-generated, not source).
