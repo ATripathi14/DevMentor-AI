@@ -20,13 +20,13 @@ Day 3 — Building the error capturer (client/runner.py)
 
 Key Points learned :
    
-    used sys.executable instead of python becuase "python" relies on PATH search order to guess the right interpreter — risky when multiple Pythons exist on a machine. "sys.executable" always points to the exact interpreter currently running your code, so it's guaranteed correct regardless of environment or machine.
+    -used sys.executable instead of python becuase "python" relies on PATH search order to guess the right interpreter — risky when multiple Pythons exist on a machine. "sys.executable" always points to the exact interpreter currently running your code, so it's guaranteed correct regardless of environment or machine.
 
-    subprocess.run() returns a CompletedProcess object, which has a returncode attribute that you can check to see if the process completed successfully or not.
+    -subprocess.run() returns a CompletedProcess object, which has a returncode attribute that you can check to see if the process completed successfully or not.
 
-    "capture_output = True" tells subprocess to capture the stdout and stderr streams and store them in the CompletedProcess object's stdout and stderr attributes.
+    -"capture_output = True" tells subprocess to capture the stdout and stderr streams and store them in the CompletedProcess object's stdout and stderr attributes.
 
-    "text = True" tells subprocess to decode the stdout and stderr streams into strings, which are then stored in the CompletedProcess object's stdout and stderr attributes.
+    -"text = True" tells subprocess to decode the stdout and stderr streams into strings, which are then stored in the CompletedProcess object's stdout and stderr attributes.
 
 4. Confirmed outputs: None returned correctly when a script runs successfully with no errors, and the correct stderr string returned when a script fails — tested against 3 broken scripts and 1 working script
 5. Wrote parse_error(stderr_text) extracting error type and message from the final traceback line. Uses split(":", 1) to avoid breaking on messages that contain colons themselves.

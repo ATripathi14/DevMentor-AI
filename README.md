@@ -129,7 +129,7 @@ Evaluation artifacts (confusion matrix, per-class F1, model card) live in `ml_en
 
 ## Project Status
 
-**In active development.** Currently in Phase 1 (Local MVP) of an 8-week build plan.
+**In active development.** Currently in Phase 1 (Local MVP) of the build plan.
 
 - [x] Phase 0 — Foundation (environment, Git, 12 broken scripts, error anatomy)
 - [ ] Phase 1 — Local MVP (in progress)

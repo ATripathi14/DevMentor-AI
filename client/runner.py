@@ -15,8 +15,7 @@ def get_output_error(script_path: str) -> str | None:
     """
 
     result = subprocess.run([sys.executable, script_path], capture_output=True, text=True)
-
-   # sys.executable guarantees the usage of the exact interpreter running this code, avoiding PATH ambiguity across multiple   installed Pythons.
+    # sys.executable guarantees the usage of the exact interpreter running this code, avoiding PATH ambiguity across multiple   installed Pythons.
 
     if result.returncode != 0: #it holds the exit code the subprocess finished with.
         # A return code of 0 means the script ran successfully; any non-zero value (typically 1) means it crashed or exited with an error.
@@ -24,10 +23,8 @@ def get_output_error(script_path: str) -> str | None:
 
     return None
 
-
-
 def parse_error(stderr_text: str) -> tuple[str, str] | None:
-    #Extracts the error type and message from the traceback string and returns (error_type, message), or None if no error
+    """Extracts the error type and message from the traceback string and returns (error_type, message), or None if no error"""
 
     if not stderr_text:
         return None
@@ -41,20 +38,19 @@ def parse_error(stderr_text: str) -> tuple[str, str] | None:
 
     return None
 
-
 def fingerprint(error_type: str, message: str) -> str:
-    # Return a short, stable hash identifying this error
+    """ Return a short, stable hash identifying this error"""
     # Same error_type + message -> always the same hash (identity check).
     text = f"{error_type}:{message}"
     return hashlib.sha256(text.encode()).hexdigest()[:12]
     # [:12] -> shorten the hash for readability/logging; still unique enough for our scale.
 
 
+# Leading underscore signals "this is internal/private to this module — not part of the public interface other files should call directly."(no actual access restriction, purely a convention communicating intent to readers)
 
 _DEBOUNCE_FILE = os.path.join(os.path.dirname(__file__), ".debounce_state.json")
 # File lives next to runner.py regardless of where the script is run from.
 # Stores: { fingerprint: last_seen_unix_timestamp }
-
 
 def _load_debounce_state() -> dict:
     """Read the fingerprint -> last_seen_timestamp map from disk."""
@@ -64,12 +60,10 @@ def _load_debounce_state() -> dict:
     with open(_DEBOUNCE_FILE, "r") as f:
         return json.load(f)
 
-
 def _save_debounce_state(state: dict) -> None:
     """Write the fingerprint -> last_seen_timestamp map to disk."""
     with open(_DEBOUNCE_FILE, "w") as f:
         json.dump(state, f)
-
 
 def should_notify(fp: str, window_seconds: int = 60) -> bool:
     """Return False if this fingerprint was already notified within window_seconds."""
@@ -89,14 +83,21 @@ def should_notify(fp: str, window_seconds: int = 60) -> bool:
 # This only runs the code below it when the file is executed directly — not when it's imported by another file.
 if __name__ == "__main__":
     scripts = [
-        "ml_engine/data/raw/type_error.py",
-        "ml_engine/data/raw/key_error.py",
-        "ml_engine/data/raw/index_error.py",
+        "ml_engine/data/raw/Type_Error.py",
+        "ml_engine/data/raw/Key_Error.py",
+        "ml_engine/data/raw/Index_Error.py",
         "ml_engine/data/raw/None_Type_Error.py",
-        "test/fixtures/_working_test.py",
-
+        "ml_engine/data/raw/None_Type_Error1.py",
+        "ml_engine/data/raw/Recursion_Error.py",
+        "ml_engine/data/raw/File_Not_Found_Error.py",
+        "ml_engine/data/raw/permission_Error.py",
+        "ml_engine/data/raw/Syntax_Error.py",
+        "ml_engine/data/raw/Zero_division_Error.py",
+        "ml_engine/data/raw/Attribute_Error.py",
+        "ml_engine/data/raw/Module_Not_Found_Error.py",
+        "ml_engine/data/raw/network_Error.py",
+        "ml_engine/data/raw/value_Error.py",
     ]
-
     for path in scripts:
         error = get_output_error(path)
         if error:

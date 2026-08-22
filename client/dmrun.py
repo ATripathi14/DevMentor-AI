@@ -16,11 +16,11 @@ if __name__ == "__main__":
         result = parse_error(error)  # pull out just the error type + message
         if result:
             error_type, message = result
-            fp = fingerprint(error_type, message)  # unique ID for this specific error
+            fingerprint_id = fingerprint(error_type, message)  # unique ID for this specific error
 
-            if should_notify(fp):
+            if should_notify(fingerprint_id):
                 print(f"{error_type}: {message}")
-                print(f"[fingerprint: {fp}]")
+                print(f"[fingerprint: {fingerprint_id}]")
             else:
                 print(f"(suppressed — same error seen recently) {error_type}: {message}")
         else:
