@@ -1,4 +1,5 @@
 import sys
+import requests
 from runner import get_output_error, parse_error, fingerprint, should_notify
 
 if __name__ == "__main__":
@@ -19,8 +20,18 @@ if __name__ == "__main__":
             fingerprint_id = fingerprint(error_type, message)  # unique ID for this specific error
 
             if should_notify(fingerprint_id):
-                print(f"{error_type}: {message}")
-                print(f"[fingerprint: {fingerprint_id}]")
+                # POST the error details to the local FastAPI service and get back
+                # a structured explanation instead of just printing the raw error.
+                response = requests.post(
+                    "http://localhost:8765/analyze",
+                    json={
+                        "error_type": error_type,
+                        "message": message,
+                        "fingerprint": fingerprint_id,
+                    },
+                )
+                data = response.json()
+                print(f"[{data['category']}] {data['explanation']}")
             else:
                 print(f"(suppressed — same error seen recently) {error_type}: {message}")
         else:

@@ -73,3 +73,20 @@ SUMMARY OF THE WEEK -
 2. I now understand the project's architecture better, including what each function is responsible for and why clear naming conventions matter.
 
 3. Since I have hit real friction with imports I also somewhat got the idea of importing modules across a project  but i still need to learn about it more.
+
+## Known gaps — to address during Week 5 dataset construction
+
+- normalize_error_type() currently can't distinguish NoneType errors. They surface as TypeError 
+  or AttributeError with "NoneType" in the message text, not as their own exception class — 
+  so none_type_error is currently unreachable as a category output. Needs message-content checking 
+  (not just exception-name lookup) to fix properly.
+
+- RecursionError is not yet in ERROR_TYPE_TO_CATEGORY — currently falls through to the default 
+  "other_error" via .get()'s fallback, which is correct behavior but not an explicit, intentional mapping yet.
+
+- Broken script filenames in ml_engine/data/raw/ have inconsistent casing (e.g. Key_Error.py vs 
+  network_Error.  py vs permission_Error.py). Worth standardizing (matching category label strings) when 
+  rewriting/expanding scripts for the ML dataset.
+
+- Zero_division_Error.py (from Day 2) intentionally maps to the "other_error" category, not a dedicated
+  13th label — keeping the official label set at 12 categories as originally planned.
