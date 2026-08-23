@@ -12,3 +12,22 @@ EXPLANATIONS = {
     "network_error": "The program couldn't establish a network connection. Check your internet connection, or whether the target server/port is actually reachable.",
     "other_error": "An error occurred that doesn't match a common category. Read the full traceback for more specific detail about what went wrong.",
 }
+
+ERROR_TYPE_TO_CATEGORY = {
+    "SyntaxError": "syntax_error",
+    "TypeError": "type_error",
+    "KeyError": "key_error",
+    "IndexError": "index_error",
+    "AttributeError": "attribute_error",
+    "ModuleNotFoundError": "module_not_found",
+    "FileNotFoundError": "file_not_found",
+    "PermissionError": "permission_error",
+    "ValueError": "value_error",
+    "ConnectionError": "network_error",
+    "ZeroDivisionError": "other_error",
+}
+
+
+def normalize_error_type(raw_error_type: str) -> str:
+    """Maps a raw Python exception class name to one of the 12 official category labels."""
+    return ERROR_TYPE_TO_CATEGORY.get(raw_error_type, "other_error")
