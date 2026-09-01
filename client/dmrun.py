@@ -22,16 +22,24 @@ if __name__ == "__main__":
             if should_notify(fingerprint_id):
                 # POST the error details to the local FastAPI service and get back
                 # a structured explanation instead of just printing the raw error.
-                response = requests.post(
-                    "http://localhost:8765/analyze",
-                    json={
-                        "error_type": error_type,
-                        "message": message,
-                        "fingerprint": fingerprint_id,
-                    },
-                )
-                data = response.json()
-                print(f"[{data['category']}] {data['explanation']}")
+                try:
+                    response = requests.post(
+                        "http://localhost:8765/analyze",
+                        json={
+                            "error_type": error_type,
+                            "message": message,
+                            "fingerprint": fingerprint_id,
+                        },
+                        timeout=3,
+                    )
+                    data = response.json()
+                    print(f"[{data['category']}] {data['explanation']}")
+                except requests.exceptions.ConnectionError:
+                    # The local FastAPI service isn't running/reachable — fail
+                    # gracefully instead of crashing with a raw network traceback.
+                    print(f"{error_type}: {message}")
+                    print("(Could not reach the local DevMentor service — is it running? "
+                          "Start it with: uvicorn local_service.main:app --reload --port 8765)")
             else:
                 print(f"(suppressed — same error seen recently) {error_type}: {message}")
         else:

@@ -23,6 +23,7 @@ EXPLANATIONS = {
 
     "other_error": "This error doesn't match one of the common categories above. Read the full traceback carefully — the last line usually names the exact exception type, and the lines above it show exactly which part of your code triggered it.",
 }
+
 ERROR_TYPE_TO_CATEGORY = {
     "SyntaxError": "syntax_error",
     "TypeError": "type_error",
@@ -34,9 +35,9 @@ ERROR_TYPE_TO_CATEGORY = {
     "PermissionError": "permission_error",
     "ValueError": "value_error",
     "ConnectionError": "network_error",
+    "requests.exceptions.ConnectionError": "network_error",
     "ZeroDivisionError": "other_error",
 }
-
 
 def normalize_error_type(raw_error_type: str) -> str:
     """Maps a raw Python exception class name to one of the 12 official category labels."""
