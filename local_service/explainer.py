@@ -1,3 +1,5 @@
+# Maps each of the 12 official error categories to a plain-English
+# explanation and suggested fix, shown to the user by the /analyze endpoint
 EXPLANATIONS = {
     "syntax_error": "Python couldn't even start running your code because something breaks its grammar rules — usually a missing colon, an unclosed bracket or quote, or bad indentation. Look at the exact line and column the error points to; the mistake is almost always right there or on the line just before it.",
 
@@ -24,6 +26,9 @@ EXPLANATIONS = {
     "other_error": "This error doesn't match one of the common categories above. Read the full traceback carefully — the last line usually names the exact exception type, and the lines above it show exactly which part of your code triggered it.",
 }
 
+# Maps raw Python exception class names (as extracted by parse_error())
+# to one of the 12 official category labels above. Falls back to
+# "other_error" for any unrecognized exception type.
 ERROR_TYPE_TO_CATEGORY = {
     "SyntaxError": "syntax_error",
     "TypeError": "type_error",

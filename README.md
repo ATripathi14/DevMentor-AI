@@ -129,13 +129,16 @@ Evaluation artifacts (confusion matrix, per-class F1, model card) live in `ml_en
 
 ## Project Status
 
-**In active development.** Currently in Phase 1 (Local MVP) of the build plan.
+**In active development.** Currently in Phase 1 (Local MVP) — Week 2, 
+Day 5 complete.
 
 - [x] Phase 0 — Foundation (environment, Git, 12 broken scripts, error anatomy)
 - [ ] Phase 1 — Local MVP (in progress)
   - [x] `dmrun` wrapper: captures and parses errors via subprocess
   - [x] Error fingerprinting + debounce (persisted across runs)
-  - [ ] Local FastAPI service (`/analyze` endpoint)
+  - [x] Local FastAPI service with `/analyze` and `/latest` endpoints
+  - [x] Rule-based explanations for all 12 error categories
+  - [x] 4 passing API tests (pytest)
   - [ ] Floating widget (PySide6)
 - [ ] Phase 2 — Privacy Layer
 - [ ] Phase 3 — ML Engine
@@ -154,13 +157,26 @@ pip install -e .
 
 **Try it out:**
 
+Start the local service (leave this running in its own terminal):
+
+```bash
+uvicorn local_service.main:app --reload --port 8765
+```
+
+In a separate terminal, run a broken script through `dmrun`:
+
 ```bash
 python client/dmrun.py python ml_engine/data/raw/Key_Error.py
 ```
 
-This runs the script through `dmrun`, captures the resulting error, and prints its type and message to the console. If you run the same broken script again within 60 seconds, the repeat is automatically suppressed rather than printed again — this is the debounce logic in action.
+This captures the error, classifies it into one of 12 categories, and 
+prints a plain-English explanation and suggested fix. If the local 
+service isn't running, `dmrun` still shows the raw error along with a 
+message telling you how to start it. Running the same broken script 
+again within 60 seconds is automatically suppressed rather than shown 
+twice — this is the debounce logic in action.
 
-> The local FastAPI service and floating widget are next up in Phase 1.
+> The floating widget is next up in Phase 1.
 
 ## Roadmap
 
