@@ -30,10 +30,12 @@ class DevMentorWidget(QWidget):
         layout.addWidget(self.label)
 
         dismiss_button = QPushButton("Dismiss")
-        dismiss_button.clicked.connect(self.hide)  # hides, doesn't close
+        dismiss_button.clicked.connect(self.hide)  # hides the widget, doesn't close it
         layout.addWidget(dismiss_button)
 
-        self.setLayout(layout)
+        copy_button = QPushButton("Copy")
+        copy_button.clicked.connect(self.copy_explanation) #copies the current explanation text to clipboard 
+        layout.addWidget(copy_button)
 
         # Tracking the fingerprint of the last error displayed, so we only
         # update the label when something genuinely new comes in.
@@ -60,6 +62,9 @@ class DevMentorWidget(QWidget):
         except requests.exceptions.ConnectionError:
             pass   # Local service not running — leave the current label as-it-is.
 
+    def copy_explanation(self):
+        """Copies the current label text to the system clipboard."""
+        QApplication.clipboard().setText(self.label.text())
 
 
 if __name__ == "__main__":
