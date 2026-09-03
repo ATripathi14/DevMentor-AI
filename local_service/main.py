@@ -32,6 +32,7 @@ def analyze(request: AnalyzeRequest):
         "explanation": explanation,
         "category": category,
         "source": "rules",
+        "fingerprint": request.fingerprint,
     }
 
     global latest_result
