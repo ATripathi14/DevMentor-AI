@@ -37,6 +37,8 @@ class DevMentorWidget(QWidget):
         copy_button.clicked.connect(self.copy_explanation) #copies the current explanation text to clipboard 
         layout.addWidget(copy_button)
 
+        self.setLayout(layout)
+
         # Tracking the fingerprint of the last error displayed, so we only
         # update the label when something genuinely new comes in.
         self.last_fingerprint = None
