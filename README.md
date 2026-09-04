@@ -18,6 +18,7 @@
 - [Tech Stack](#tech-stack)
 - [Project Status](#project-status)
 - [Getting Started](#getting-started)
+- [MVP Demo (Week 3)](#mvp-demo-week-3)
 - [Roadmap](#roadmap)
 - [Project Structure](#project-structure)
 
@@ -176,7 +177,11 @@ message telling you how to start it. Running the same broken script
 again within 60 seconds is automatically suppressed rather than shown 
 twice — this is the debounce logic in action.
 
-> The floating widget is next up in Phase 1.
+> The floating widget now updates automatically as errors are detected — see the demo below.
+
+## MVP Demo (Week 3)
+
+[Watch the demo](./docs/demo/week3_mvp_demo.mp4)
 
 ## Roadmap
 
