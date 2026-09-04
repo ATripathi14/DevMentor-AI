@@ -12,13 +12,13 @@
 - [The Solution](#the-solution)
 - [Why This Is Different](#why-this-is-different)
 - [How It Works](#how-it-works)
+- [MVP Demo](#mvp-demo)
 - [Architecture](#architecture)
 - [Privacy Model](#privacy-model)
 - [ML Engine](#ml-engine)
 - [Tech Stack](#tech-stack)
 - [Project Status](#project-status)
 - [Getting Started](#getting-started)
-- [MVP Demo (Week 3)](#mvp-demo-week-3)
 - [Roadmap](#roadmap)
 - [Project Structure](#project-structure)
 
@@ -62,6 +62,13 @@ The key feature is zero-click detection: the widget can respond before you've re
 3. **Understand** — A local ML classifier identifies the error category (and filters out normal/non-error output) in milliseconds. A similarity engine checks whether this error has been explained before.
 4. **Explain** — A floating, always-on-top widget shows a plain-English explanation and suggested next steps — instantly, from local inference. If you've opted into cloud assistance, only sanitized metadata is sent upstream for a richer explanation.
 5. **You stay in flow** — Copy a suggestion, mark it helpful, or dismiss it, and keep coding.
+
+## MVP Demo
+
+DevMentor detects Python errors in real time and provides
+plain-English explanations directly in a floating desktop widget.
+
+<video src="https://github.com/user-attachments/assets/9f242c6e-349d-4c0e-8a48-77a90c715378" controls="controls" muted="muted" width="100%"></video>
 
 ## Architecture
 
@@ -130,8 +137,7 @@ Evaluation artifacts (confusion matrix, per-class F1, model card) live in `ml_en
 
 ## Project Status
 
-**In active development.** Currently in Phase 1 (Local MVP) — Week 2, 
-Day 5 complete.
+**In active development.** Currently in Phase 1 (Local MVP).
 
 - [x] Phase 0 — Foundation (environment, Git, 12 broken scripts, error anatomy)
 - [ ] Phase 1 — Local MVP (in progress)
@@ -140,7 +146,7 @@ Day 5 complete.
   - [x] Local FastAPI service with `/analyze` and `/latest` endpoints
   - [x] Rule-based explanations for all 12 error categories
   - [x] 4 passing API tests (pytest)
-  - [ ] Floating widget (PySide6)
+  - [x] Floating widget (PySide6)
 - [ ] Phase 2 — Privacy Layer
 - [ ] Phase 3 — ML Engine
 - [ ] Phase 4 — UX polish + optional OCR
@@ -177,11 +183,7 @@ message telling you how to start it. Running the same broken script
 again within 60 seconds is automatically suppressed rather than shown 
 twice — this is the debounce logic in action.
 
-> The floating widget now updates automatically as errors are detected — see the demo below.
-
-## MVP Demo (Week 3)
-
-[Watch the demo](./docs/demo/week3_mvp_demo.mp4)
+> The floating widget now updates automatically as errors are detected — see the [MVP Demo](#mvp-demo) above.
 
 ## Roadmap
 
