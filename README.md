@@ -137,22 +137,24 @@ Evaluation artifacts (confusion matrix, per-class F1, model card) live in `ml_en
 
 ## Project Status
 
-**In active development.** Currently in Phase 1 (Local MVP).
+**In active development.** Currently in Phase 1 (Local MVP) - Full MVP loop working end-to-end.
 
 - [x] Phase 0 — Foundation (environment, Git, 12 broken scripts, error anatomy)
-- [ ] Phase 1 — Local MVP (in progress)
+- [x] Phase 1 — Local MVP
   - [x] `dmrun` wrapper: captures and parses errors via subprocess
   - [x] Error fingerprinting + debounce (persisted across runs)
   - [x] Local FastAPI service with `/analyze` and `/latest` endpoints
   - [x] Rule-based explanations for all 12 error categories
   - [x] 4 passing API tests (pytest)
-  - [x] Floating widget (PySide6)
+  - [x] Floating widget (PySide6): always-on-top, auto-updates within 
+        2 seconds, Dismiss/Copy buttons, system tray icon
 - [ ] Phase 2 — Privacy Layer
 - [ ] Phase 3 — ML Engine
 - [ ] Phase 4 — UX polish + optional OCR
 - [ ] Phase 5 — Cloud assist & productization *(stretch)*
 
-## Getting Started
+
+## How to get started
 
 ```bash
 git clone https://github.com/ATripathi14/DevMentor-AI.git
