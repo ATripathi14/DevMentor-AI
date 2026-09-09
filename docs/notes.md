@@ -57,13 +57,13 @@ Day 5 — Refactor, documentation, and v0.1 tag
 
 2. Renamed the unclear variable fp to fingerprint_id in dmrun.py for readability — a plain comment wasn't enough context on its own when reading the file top to bottom.
 
-3. Re-ran all 12 broken scripts through dmrun.py to confirm today's changes hadn't broken anything from Day 3 — all 12 still produced correct output.
+3. Re-ran all 12 broken scripts through dmrun.py to confirm today's changes hadn't broken anything — all 12 still produced correct output.
 
-4. Updated README's Project Status section to accurately reflect progress (Day 5 of Phase 1 completed).
+4. Updated README's Project Status section to accurately reflect progress .
 
 5. Wrote docs/architecture.md documenting the current, as-built pipeline (separate from the target architecture shown in README).
 
-6. Tagged v0.1-foundation on GitHub, marking Phase 0 — Foundation as complete.
+6. Tagged v0.1-foundation on GitHub, marking Foundation as complete.
 
    
 SUMMARY OF THE WEEK -
@@ -74,7 +74,8 @@ SUMMARY OF THE WEEK -
 
 3. Since I have hit real friction with imports I also somewhat got the idea of importing modules across a project  but i still need to learn about it more.
 
-## Known gaps — to address during Week 5 dataset construction
+
+Known issues — to address during dataset enhancement
 
 - normalize_error_type() currently can't distinguish NoneType errors. They surface as TypeError 
   or AttributeError with "NoneType" in the message text, not as their own exception class — 
@@ -88,5 +89,65 @@ SUMMARY OF THE WEEK -
   network_Error.  py vs permission_Error.py). Worth standardizing (matching category label strings) when 
   rewriting/expanding scripts for the ML dataset.
 
-- Zero_division_Error.py (from Day 2) intentionally maps to the "other_error" category, not a dedicated
-  13th label — keeping the official label set at 12 categories as originally planned.
+- Zero_division_Error.py intentionally maps to the "other_error" category, not a dedicated
+  13th label — keeping the official label set at 12 categories.
+
+Week 2 — Local API (FastAPI)
+
+1. Built a FastAPI server (main.py) running on port 8765, starting with a basic health-check route.
+
+2. Wrote explainer.py — a dictionary mapping all 12 error categories to plain-English explanations, plus a mapping from raw Python exception names to those 12 labels.
+
+3. Built the POST /analyze endpoint. It takes error_type, message, and fingerprint, figures out the category, looks up the explanation, and sends it back. Pydantic automatically rejects bad requests before my code even runs.
+
+4. Connected dmrun.py to this endpoint using requests.post(), instead of just printing the error locally.
+
+5. Added GET /latest, which remembers the most recent result in a plain dictionary in memory. This is fine here since the server keeps running, unlike dmrun.py which exits every time.
+
+6. Wrote 4 pytest tests using FastAPI's TestClient to check known errors, unknown errors, /latest updating, and bad requests getting rejected.
+
+Bugs I found and fixed:
+- My mapping only matched plain exception names like "ConnectionError", but errors from the requests library show up as "requests.exceptions.ConnectionError" — a longer, fully-qualified name. Had to add that as its own mapping.
+- dmrun.py would crash with a huge network traceback if the server wasn't running. Fixed it to catch that specific error and show a short, clear message instead.
+- My first draft of the 12 explanations sounded like textbook definitions, not something a person would actually say. Rewrote all of them to lead with a real example and a clear next step.
+
+Known gap I'm leaving for later: none_type_error can never actually get chosen right now, because NoneType errors show up as TypeError or AttributeError, not their own error type. I'll fix this properly in Week 5 when I build the real dataset.
+
+Something I learned: pytest tests my code's logic without needing a real server running. Manually running dmrun against a live server tests something different — whether the whole system actually works together. Both matter, and one doesn't replace the other.
+
+
+Week 3 — Floating Widget (PySide6)
+
+1. Built the widget: always-on-top, fixed size, positioned in the top-right corner.
+
+2. Made it poll /latest every 2 seconds and only update when the error is genuinely new — had to add fingerprint to the API responses for this to work.
+
+3. Added Dismiss (hides, doesn't close) and Copy buttons.
+
+4. Added a system tray icon with a menu (Show Widget, Exit) and made single-click toggle the widget too.
+
+5. Recorded a short demo video of the whole thing working live.
+
+Bugs I found and fixed:
+- Accidentally deleted the line that attaches the layout to the window while adding the Copy button. The window just showed up blank — no error, no crash. Found it by comparing screenshots from before and after.
+- Handling single-click and double-click the same way meant double-clicking toggled the widget twice, cancelling itself out. Fixed by only reacting to single-click.
+- The Copy button didn't give any feedback, so I couldn't tell if it worked. Added a quick "Copied!" message on the button for a second.
+
+A design choice I thought through and kept: if I trigger error A, then error B, then error A again quickly, the second error A still gets suppressed — even though something else happened in between. I initially expected this to feel wrong, but it's actually correct: debounce is about not repeating the same error, not about "what was shown last." If it worked the other way, you could dodge debounce completely just by alternating between two errors.
+
+Phase 1 is done as of v0.3-mvp-complete — the whole thing works end to end now. Break a script, and the widget shows the explanation automatically, no extra steps.
+
+Week 4 — Sanitizer (Day 1)
+
+1. Learned regex basics: \w, \d, \s, ., *, +, character sets, and re.sub() for find-and-replace.
+
+2. Wrote sanitize_paths() — redacts Windows paths (C:\Users\...) and Unix paths (/home/user/...) with [REDACTED_PATH].
+
+3. First version of the Unix pattern was too greedy (matched on any single slash), incorrectly redacting things like "3/4" and parts of URLs. Fixed by requiring at least two slashes, so it only 
+matches genuine multi-segment paths.
+
+4. Real lesson: after fixing the pattern, it still looked broken when tested in an already-open Python shell — because the shell had the OLD version of the function cached in memory from before the edit. Had to start a completely fresh shell to see the fix actually take effect. Editing a .py file doesn't automatically update code already imported into a running shell session.
+
+5. Wrote 4 pytest tests: Windows path redacted, Unix path redacted, plain text left alone, and a single slash (fraction) not mistaken for a path. All passing.
+
+6. Decided: sanitize_paths() should NOT try to handle URLs — a plain public URL like https://example.com isn't sensitive. Credential- bearing URLs (https://user:pass@host) are a separate, later concern (sanitize_urls()), not this function's job.
