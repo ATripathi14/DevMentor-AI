@@ -137,7 +137,7 @@ A design choice I thought through and kept: if I trigger error A, then error B, 
 
 Phase 1 is done as of v0.3-mvp-complete — the whole thing works end to end now. Break a script, and the widget shows the explanation automatically, no extra steps.
 
-Week 4 — Sanitizer (Day 1)
+Week 4 — Sanitizer
 
 1. Learned regex basics: \w, \d, \s, ., *, +, character sets, and re.sub() for find-and-replace.
 
@@ -151,3 +151,26 @@ matches genuine multi-segment paths.
 5. Wrote 4 pytest tests: Windows path redacted, Unix path redacted, plain text left alone, and a single slash (fraction) not mistaken for a path. All passing.
 
 6. Decided: sanitize_paths() should NOT try to handle URLs — a plain public URL like https://example.com isn't sensitive. Credential- bearing URLs (https://user:pass@host) are a separate, later concern (sanitize_urls()), not this function's job.
+
+
+Known limitations, deliberately accepted (not fixed):
+   - Unix paths containing spaces (e.g. "/home/user/My Documents/file.py") 
+     only get partially redacted — the pattern stops at the first space. 
+     Rare in practice (error tracebacks rarely include spaced folder 
+     names), and handling arbitrary spaces risks new false positives 
+     elsewhere. Accepted as a known gap rather than over-engineering the regex.
+   - Windows paths using forward slashes (C:/Users/...) leave the drive 
+     letter (C:) visible, since the rest gets caught by the Unix path 
+     pattern instead. Minor leak (a bare drive letter isn't very 
+     sensitive on its own) — accepted rather than adding complexity.
+
+
+7. Deliberately tried to break the sanitizer with adversarial inputs: paths with spaces, emails with +, tokens at exact length boundaries, multiple emails, quoted env var values, forward-slash Windows paths.
+
+8. Found 2 new limitations, documented rather than fixed (over-engineering the regex risks new false positives elsewhere):
+- Paths containing spaces only get partially redacted.
+- Windows paths with forward slashes (C:/Users/...) leave the drive letter visible.
+
+9. Wired sanitize() into dmrun.py: message is sanitized BEFORE fingerprinting, right after parse_error(). Reasoning: fingerprinting the sanitized version means the fingerprint reflects the meaningful error content, not incidental sensitive details like a username in a path — and guarantees nothing sensitive ever reaches the fingerprint, debounce state file, or the server.
+
+10. Verified end-to-end with a fake API key in a test script: confirmed via a temporary debug print that the SANITIZED message (with [REDACTED_TOKEN]) is what actually gets fingerprinted and sent — not the raw text. Removed the debug print after confirming.

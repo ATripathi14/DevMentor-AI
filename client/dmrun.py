@@ -1,6 +1,7 @@
 import sys
 import requests
 from runner import get_output_error, parse_error, fingerprint, should_notify
+from sanitizer.sanitizer import sanitize
 
 if __name__ == "__main__":
     args = sys.argv[1:]
@@ -17,11 +18,17 @@ if __name__ == "__main__":
         result = parse_error(error)  # pull out just the error type + message
         if result:
             error_type, message = result
+
+            # Sanitize the message BEFORE fingerprinting, so the fingerprint
+            # reflects the meaningful error content, not incidental details
+            # like a username in a file path. Also ensures nothing sensitive
+            # ever reaches the fingerprint, debounce state, or the server.
+            message = sanitize(message)
+            # print(f"[DEBUG] Sanitized message being sent: {message}")  # temporary
+
             fingerprint_id = fingerprint(error_type, message)  # unique ID for this specific error
 
             if should_notify(fingerprint_id):
-                # POST the error details to the local FastAPI service and get back
-                # a structured explanation instead of just printing the raw error.
                 try:
                     response = requests.post(
                         "http://localhost:8765/analyze",
@@ -35,8 +42,6 @@ if __name__ == "__main__":
                     data = response.json()
                     print(f"[{data['category']}] {data['explanation']}")
                 except requests.exceptions.ConnectionError:
-                    # The local FastAPI service isn't running/reachable — fail
-                    # gracefully instead of crashing with a raw network traceback.
                     print(f"{error_type}: {message}")
                     print("(Could not reach the local DevMentor service — is it running? "
                           "Start it with: uvicorn local_service.main:app --reload --port 8765)")
