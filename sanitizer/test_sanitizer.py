@@ -1,6 +1,6 @@
 from sanitizer.sanitizer import (
     sanitize_paths, sanitize_emails, sanitize_tokens,
-    sanitize_env_vars, sanitize_urls, sanitize,
+    sanitize_env_vars, sanitize_urls, sanitize, assess_risk,
 )
 
 # --- paths ---
@@ -88,6 +88,25 @@ def test_long_identifier_is_still_caught_as_a_token():
     text = "variable name: normal-long-identifier"
     result = sanitize_tokens(text)
     assert "[REDACTED_TOKEN]" in result
+
+#---risk scorer----
+def test_assess_risk_returns_safe_for_clean_text():
+    """Sanitized text with nothing suspicious remaining should be marked safe."""
+    text = sanitize("Error in the login function")
+    assert assess_risk(text) == "safe"
+
+
+def test_assess_risk_flags_suspicious_leftover_pattern():
+    """Text with a long alphanumeric run that slipped through should be flagged for review."""
+    text = sanitize("Something with a weird identifier abc123xyz789fake")
+    assert assess_risk(text) == "review"
+
+
+def test_assess_risk_handles_already_redacted_text_as_safe():
+    """Text containing only redaction placeholders (e.g. [REDACTED_PATH]) should be safe,
+    not accidentally flagged as suspicious itself."""
+    text = sanitize(r"Error in C:\Users\apurv\secret.py")
+    assert assess_risk(text) == "safe"
 
 # --- master sanitize() ---
 def test_sanitize_chains_all_five():

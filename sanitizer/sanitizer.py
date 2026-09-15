@@ -37,3 +37,17 @@ def sanitize(text: str) -> str:
     text = sanitize_env_vars(text)
     text = sanitize_paths(text)
     return text
+
+
+def assess_risk(sanitized_text: str) -> str:
+    """Scans already-sanitized text for anything still suspicious.
+    Returns 'safe' if nothing concerning remains, 'review' otherwise.
+    """
+    # Anything that still looks like it could be an unredacted secret:
+    # a long run of mixed-case letters/digits that our token pattern
+    # might have missed (e.g. right at a boundary, or a different format).
+    suspicious_pattern = r"[A-Za-z0-9]{16,}"
+
+    if re.search(suspicious_pattern, sanitized_text):
+        return "review"
+    return "safe"
