@@ -152,7 +152,7 @@ matches genuine multi-segment paths.
 
 6. Decided: sanitize_paths() should NOT try to handle URLs — a plain public URL like https://example.com isn't sensitive. Credential- bearing URLs (https://user:pass@host) are a separate, later concern (sanitize_urls()), not this function's job.
 
-
+--------------------------------------------------------------------------------------------------------------
 Known limitations, deliberately accepted (not fixed):
    - Unix paths containing spaces (e.g. "/home/user/My Documents/file.py") 
      only get partially redacted — the pattern stops at the first space. 
@@ -163,7 +163,7 @@ Known limitations, deliberately accepted (not fixed):
      letter (C:) visible, since the rest gets caught by the Unix path 
      pattern instead. Minor leak (a bare drive letter isn't very 
      sensitive on its own) — accepted rather than adding complexity.
-
+----------------------------------------------------------------------------------------------------------------
 
 7. Deliberately tried to break the sanitizer with adversarial inputs: paths with spaces, emails with +, tokens at exact length boundaries, multiple emails, quoted env var values, forward-slash Windows paths.
 
@@ -174,3 +174,5 @@ Known limitations, deliberately accepted (not fixed):
 9. Wired sanitize() into dmrun.py: message is sanitized BEFORE fingerprinting, right after parse_error(). Reasoning: fingerprinting the sanitized version means the fingerprint reflects the meaningful error content, not incidental sensitive details like a username in a path — and guarantees nothing sensitive ever reaches the fingerprint, debounce state file, or the server.
 
 10. Verified end-to-end with a fake API key in a test script: confirmed via a temporary debug print that the SANITIZED message (with [REDACTED_TOKEN]) is what actually gets fingerprinted and sent — not the raw text. Removed the debug print after confirming.
+
+11. Built local_service/settings.py: load_settings()/save_settings() reading/writing settings.json. Defaults to {privacy_mode: local_only, confidence_threshold: 0.6}. Auto-creates the file with defaults on first run if it doesn't exist yet. Gitignored, since it's a runtime-generated, user-specific config file.

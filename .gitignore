@@ -230,3 +230,5 @@ readonly.txt
 test/scratch/
 
 client/.debounce_state.json
+
+local_service/settings.json
