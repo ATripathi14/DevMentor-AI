@@ -75,13 +75,11 @@ def test_url_without_credentials_is_not_modified():
     text = "Visit https://example.com/docs for help."
     assert sanitize_urls(text) == text
 
-
 def test_bare_url_without_credentials_is_not_treated_as_a_path():
     """A URL with no embedded credentials should survive sanitize_paths untouched."""
     text = "See https://example.com/path for details"
     result = sanitize_paths(text)
     assert result == text
-
 
 def test_long_identifier_is_still_caught_as_a_token():
     """Document the trade-off: any 20+ char identifier gets redacted, not just real secrets."""
@@ -89,18 +87,21 @@ def test_long_identifier_is_still_caught_as_a_token():
     result = sanitize_tokens(text)
     assert "[REDACTED_TOKEN]" in result
 
+def test_sanitize_leaves_completely_clean_text_unchanged():
+    """Text with nothing sensitive should pass through sanitize() completely unchanged."""
+    text = "This is a perfectly ordinary error message with nothing sensitive."
+    assert sanitize(text) == text
+
 #---risk scorer----
 def test_assess_risk_returns_safe_for_clean_text():
     """Sanitized text with nothing suspicious remaining should be marked safe."""
     text = sanitize("Error in the login function")
     assert assess_risk(text) == "safe"
 
-
 def test_assess_risk_flags_suspicious_leftover_pattern():
     """Text with a long alphanumeric run that slipped through should be flagged for review."""
     text = sanitize("Something with a weird identifier abc123xyz789fake")
     assert assess_risk(text) == "review"
-
 
 def test_assess_risk_handles_already_redacted_text_as_safe():
     """Text containing only redaction placeholders (e.g. [REDACTED_PATH]) should be safe,
@@ -109,7 +110,7 @@ def test_assess_risk_handles_already_redacted_text_as_safe():
     assert assess_risk(text) == "safe"
 
 # --- master sanitize() ---
-def test_sanitize_chains_all_five():
+def test_sanitize_chains_all_five_functions_together():
     text = (
         "Error in /home/user/secret.py — contact john.doe@example.com. "
         "Key: sk_live_51H8xK2eZ9mFq3RtY7pL. export SECRET_KEY=abc123def456. "
