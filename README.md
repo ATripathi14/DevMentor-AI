@@ -137,22 +137,19 @@ Evaluation artifacts (confusion matrix, per-class F1, model card) live in `ml_en
 
 ## Project Status
 
-**In active development.** Currently in Phase 1 (Local MVP) - Full MVP loop working end-to-end.
+**In active development.** Currently in Privacy Layer Phase.
 
 - [x] Phase 0 — Foundation (environment, Git, 12 broken scripts, error anatomy)
-- [x] Phase 1 — Local MVP
-  - [x] `dmrun` wrapper: captures and parses errors via subprocess
-  - [x] Error fingerprinting + debounce (persisted across runs)
-  - [x] Local FastAPI service with `/analyze` and `/latest` endpoints
-  - [x] Rule-based explanations for all 12 error categories
-  - [x] 4 passing API tests (pytest)
-  - [x] Floating widget (PySide6): always-on-top, auto-updates within 
-        2 seconds, Dismiss/Copy buttons, system tray icon
-- [ ] Phase 2 — Privacy Layer
+- [x] Phase 1 — Local MVP (dmrun, local FastAPI service, floating widget)
+- [x] Phase 2 — Privacy Layer
+  - [x] Sanitizer: paths, emails, tokens, env vars, URL credentials (20 tests)
+  - [x] Risk scorer (assess_risk) with fail-closed behavior
+  - [x] Sanitizer wired into dmrun.py before fingerprinting
+  - [x] Settings system (local_service/settings.py) with privacy mode defaults
+  - [x] docs/privacy_model.md documenting the full data flow
 - [ ] Phase 3 — ML Engine
 - [ ] Phase 4 — UX polish + optional OCR
 - [ ] Phase 5 — Cloud assist & productization *(stretch)*
-
 
 ## How to get started
 
