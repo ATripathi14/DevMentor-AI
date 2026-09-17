@@ -1,4 +1,4 @@
-# DevMentor AI — Architecture (Current State, Week 3 Day 5)
+# DevMentor AI — Architecture (Current State)
 
 This document describes the pipeline as it actually exists today — 
 not the full future vision (see README.md for the target architecture).
@@ -9,138 +9,154 @@ not the full future vision (see README.md for the target architecture).
 script runs
     |
     v
-dmrun.py       <- reads command from CLI args (sys.argv)
+dmrun.py    <- reads command from CLI args (sys.argv)
     |
     v
 runner.py: get_output_error()   <- runs script via subprocess, captures stderr
     |
     v
-runner.py: parse_error()        <- extracts error_type + message from traceback
+runner.py: parse_error()     <- extracts error_type + message from traceback
     |
     v
-runner.py: fingerprint()        <- hashes (error_type, message) into a 12-char ID using hashlib
-    |
+sanitizer.py: sanitize()     <- redacts paths, emails, tokens, env var
+    |                               values, and URL credentials from message
     v
-runner.py: should_notify()      <- checks .debounce_state.json for recent duplicates
+sanitizer.py: assess_risk()     <- re-scans sanitized text for anything
+    |                               still suspicious
     |
-    +--> False --> print "suppressed" message, stop here
+    +--> "review" --> print raw error + review notice, stop here (fail closed)
     |
-    +--> True
+    +--> "safe"
          |
          v
-    dmrun.py: POST /analyze     <- sends error_type, message, fingerprint
-         |                         to local FastAPI service (localhost:8765)
-         |
-         +--> server unreachable --> print raw error + "start the service" message
-         |
+    runner.py: fingerprint()     <- hashes (error_type, SANITIZED message)
+         |                              into a 12-char ID using hashlib
          v
-    local_service/main.py: analyze()
+    runner.py: should_notify()      <- checks .debounce_state.json for
+         |                              recent duplicates
          |
-         v
-    explainer.py: normalize_error_type()  <- maps raw exception name
-         |                                    (e.g. "KeyError") to one of
-         |                                    12 category labels
-         v
-    explainer.py: EXPLANATIONS            <- looks up plain-English
-         |                                    explanation for that category
-         v
-    stores result (incl. fingerprint) in latest_result (in-memory)
+         +--> False --> print "suppressed" message, stop here
          |
-         v
-    returns {explanation, category, source, fingerprint} to dmrun.py
-         |
-         v
-    dmrun.py prints: [category] explanation
-         |
-         |    (meanwhile, independently, every 2 seconds:)
-         |
-         v
-    widget.py: QTimer polls GET /latest
-         |
-         v
-    compares fingerprint to last one shown
-         |
-         +--> unchanged --> do nothing
-         |
-         +--> new --> update floating widget label with [category] explanation
+         +--> True
+              |
+              v
+         dmrun.py: POST /analyze     <- sends error_type, SANITIZED message,
+              |                          fingerprint to local FastAPI service
+              |
+              +--> server unreachable --> print raw error + "start the service" message
+              |
+              v
+         local_service/main.py: analyze()
+              |
+              v
+         explainer.py: normalize_error_type()     <- maps raw exception name
+              |                                      to one of 12 category labels
+              v
+         explainer.py: EXPLANATIONS       <- looks up plain-English
+              |                              explanation for that category
+              v
+         stores result (incl. fingerprint) in latest_result (in-memory)
+              |
+              v
+         returns {explanation, category, source, fingerprint} to dmrun.py
+              |
+              v
+         dmrun.py prints: [category] explanation
+              |
+              |    (meanwhile, independently, every 2 seconds:)
+              |
+              v
+         widget.py: QTimer polls GET /latest
+              |
+              v
+         compares fingerprint to last one shown
+              |
+              +--> unchanged --> do nothing
+              |
+              +--> new --> update floating widget label with [category] explanation
 ```
 
 ## Components
 
 **dmrun.py**
 CLI entry point. Takes a command (e.g. `python script.py`) as arguments. 
-Delegates (hands the work off) capturing and parsing to runner.py, then 
-decides whether to display the result based on debounce state. If not 
-suppressed, POSTs the error to the local FastAPI service and prints the 
-returned explanation. If the service is unreachable, falls back to 
-printing the raw error with a message telling the user how to start it.
+Delegates capturing and parsing to runner.py, sanitizes the message, 
+checks its risk level, then decides whether to display the result 
+based on debounce state. If not suppressed, POSTs the sanitized error 
+to the local FastAPI service and prints the returned explanation.
 
 **runner.py — get_output_error(script_path)**
-Runs the target script as a subprocess using subprocess.run(). Captures 
-stderr as text. Returns the stderr string if the script failed, or None 
-if it ran successfully.
+Runs the target script as a subprocess. Captures stderr as text. 
+Returns the stderr string if the script failed, or None if it succeeded.
 
 **runner.py — parse_error(stderr_text)**
-Takes raw stderr text and extracts just the final error type and message 
-line from the traceback, discarding the rest of the stack trace.
+Extracts the error type and message from the final traceback line.
+
+**sanitizer.py — sanitize(text)**
+Chains all 5 sanitizers in sequence: URLs first, then emails, tokens, 
+env vars, and paths last. Order is deliberate — URLs must be sanitized 
+before paths, since the path pattern's collision-avoidance for `//` 
+only works correctly on text that hasn't already been partially altered.
+
+**sanitizer.py — sanitize_paths / sanitize_emails / sanitize_tokens / 
+sanitize_env_vars / sanitize_urls**
+Each redacts one category of sensitive data (file paths, email 
+addresses, long tokens/API keys, environment variable values, and 
+URL-embedded credentials respectively), replacing matches with a 
+labeled placeholder like [REDACTED_PATH].
+
+**sanitizer.py — assess_risk(sanitized_text)**
+A second, stricter safety check run after sanitization. Scans for any 
+remaining long alphanumeric run (16+ characters, a lower threshold 
+than sanitize_tokens' 20) that might indicate something slipped 
+through. Returns "review" (blocks the POST, fails closed) or "safe".
 
 **runner.py — fingerprint(error_type, message)**
-Hashes (error_type, message) using sha256, truncated to 12 characters. 
-Same inputs always produce the same fingerprint — used as a stable, 
-compact identifier for a specific error.
+Hashes (error_type, message) using sha256. Runs on the SANITIZED 
+message, not the raw one — this way the fingerprint reflects the 
+meaningful error content, not incidental sensitive details, and 
+guarantees no sensitive data reaches the fingerprint or debounce state.
 
 **runner.py — should_notify(fingerprint, window_seconds=60)**
-Checks whether this specific fingerprint was already notified within 
-the last 60 seconds. Tracks each fingerprint's own timer independently — 
-an unrelated error occurring in between does not reset another 
-fingerprint's suppression window. State is persisted to 
-client/.debounce_state.json rather than kept in memory, since dmrun.py 
-exits after every invocation.
+Checks whether this specific fingerprint was seen within the last 60 
+seconds, independently per fingerprint. Persisted to 
+client/.debounce_state.json, since dmrun.py exits after every invocation.
 
-**local_service/main.py — GET /**
-Basic health-check route confirming the server is running.
+**local_service/settings.py — load_settings() / save_settings()**
+Reads/writes local_service/settings.json. Defaults to 
+{privacy_mode: "local_only", confidence_threshold: 0.6}. Auto-creates 
+the file with defaults on first use. Not yet wired into the analyze 
+pipeline — currently just a standalone settings store, in preparation 
+for future privacy-mode switching.
 
-**local_service/main.py — POST /analyze**
-Receives {error_type, message, fingerprint} (validated automatically 
-by Pydantic — malformed requests are rejected with a 422 error before 
-this code runs). Normalizes the error type to a category, looks up its 
-explanation, stores the result (including the fingerprint) as the 
-latest, and returns it.
+**local_service/main.py — GET / / POST /analyze / GET /latest**
+Health check, error categorization + explanation lookup (receiving the 
+already-sanitized message), and most-recent-result polling endpoint, 
+respectively.
 
-**local_service/main.py — GET /latest**
-Returns the most recently analyzed result, or a placeholder message if 
-nothing has been analyzed yet since the server started. Result (incl. 
-fingerprint) is kept in an in-memory dictionary, since the server is a 
-long-running process, unlike dmrun.py.
-
-**local_service/explainer.py — normalize_error_type(raw_error_type)**
-Maps a raw Python exception class name (e.g. "KeyError", 
-"requests.exceptions.ConnectionError") to one of the 12 official 
-category labels. Falls back to "other_error" for anything unrecognized.
-
-**local_service/explainer.py — EXPLANATIONS**
-Dictionary mapping each of the 12 category labels to a plain-English 
-explanation and suggested fix.
+**local_service/explainer.py — normalize_error_type / EXPLANATIONS**
+Maps raw exception names to 12 category labels, and looks up a 
+plain-English explanation for each category.
 
 **client/widget.py — DevMentorWidget**
 A PySide6 always-on-top floating window. Polls GET /latest every 2 
-seconds via a QTimer; compares the returned fingerprint to the last one 
-displayed, and only updates the label when it's genuinely new — this 
-runs completely independently of dmrun.py, so the widget reacts to any 
-error analyzed by the service, regardless of what triggered it. Includes 
-Dismiss (hides, doesn't close), Copy (copies the current explanation to 
-the clipboard, with brief "Copied!" confirmation), and a system tray 
-icon with a right-click menu (Show Widget / Exit) plus single-click 
-toggle for showing/hiding.
+seconds, updates only when the fingerprint changes. Includes Dismiss, 
+Copy (with "Copied!" confirmation), and a system tray icon with 
+show/hide toggle and Exit.
 
-## Issues yet to resolve
+## Known Gaps and Limitations
 
 - none_type_error is currently unreachable: NoneType errors surface as 
   TypeError or AttributeError with "NoneType" in the message text, not 
-  as their own exception class. normalize_error_type() only checks 
-  exception names right now. To be fixed during dataset work.
+  as their own exception class. To be fixed during dataset work.
+- Unix paths containing spaces are only partially redacted. Accepted 
+  as a low-risk limitation rather than adding regex complexity.
+- Windows paths using forward slashes leave the bare drive letter 
+  visible. Minor, accepted limitation.
+- settings.py exists but isn't yet wired into main.py's actual 
+  request-handling logic — privacy_mode has no effect yet.
 
 ## Not Yet Built
 
-- Sanitization layer 
-- ML classifier 
+- ML classifier — 
+- Cloud-assisted explanation modes (Sanitized Cloud / Advanced Cloud)
