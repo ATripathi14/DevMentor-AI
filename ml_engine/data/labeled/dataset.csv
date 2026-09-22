@@ -1,0 +1,13 @@
+text,label
+expected ':',syntax_error
+unsupported operand type(s) for +: 'int' and 'str',type_error
+'NoneType' object is not subscriptable,none_type_error
+'email',key_error
+list index out of range,index_error
+'BuyBook' object has no attribute 'loan',attribute_error
+No module named 'prettytable',module_not_found
+[Errno 2] No such file or directory: 'non_existent_file.txt',file_not_found
+[Errno 13] Permission denied: 'readonly.txt',permission_error
+invalid literal for int() with base 10: 'twenty-five',value_error
+"HTTPConnectionPool(host='127.0.0.1', port=1): Max retries exceeded with url: / (Caused by NewConnectionError(""HTTPConnection(host='127.0.0.1', port=1): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it""))",network_error
+maximum recursion depth exceeded,other_error
