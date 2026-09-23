@@ -1,7 +1,7 @@
 import sys
 import requests
 from runner import get_output_error, parse_error, fingerprint, should_notify
-from sanitizer.sanitizer import sanitize
+from sanitizer.sanitizer import sanitize, assess_risk
 
 if __name__ == "__main__":
     args = sys.argv[1:]
@@ -24,29 +24,36 @@ if __name__ == "__main__":
             # like a username in a file path. Also ensures nothing sensitive
             # ever reaches the fingerprint, debounce state, or the server.
             message = sanitize(message)
-            # print(f"[DEBUG] Sanitized message being sent: {message}")  # temporary
 
-            fingerprint_id = fingerprint(error_type, message)  # unique ID for this specific error
-
-            if should_notify(fingerprint_id):
-                try:
-                    response = requests.post(
-                        "http://localhost:8765/analyze",
-                        json={
-                            "error_type": error_type,
-                            "message": message,
-                            "fingerprint": fingerprint_id,
-                        },
-                        timeout=3,
-                    )
-                    data = response.json()
-                    print(f"[{data['category']}] {data['explanation']}")
-                except requests.exceptions.ConnectionError:
-                    print(f"{error_type}: {message}")
-                    print("(Could not reach the local DevMentor service — is it running? "
-                          "Start it with: uvicorn local_service.main:app --reload --port 8765)")
+            # Fail closed: if anything still looks suspicious even after
+            # sanitization, don't send it anywhere — just report it locally.
+            risk = assess_risk(message)
+            if risk == "review":
+                print(f"{error_type}: {message}")
+                print("(This error was flagged for review and was not sent to the local "
+                      "service — it may still contain sensitive-looking content.)")
             else:
-                print(f"(suppressed — same error seen recently) {error_type}: {message}")
+                fingerprint_id = fingerprint(error_type, message)  # unique ID for this specific error
+
+                if should_notify(fingerprint_id):
+                    try:
+                        response = requests.post(
+                            "http://localhost:8765/analyze",
+                            json={
+                                "error_type": error_type,
+                                "message": message,
+                                "fingerprint": fingerprint_id,
+                            },
+                            timeout=3,
+                        )
+                        data = response.json()
+                        print(f"[{data['category']}] {data['explanation']}")
+                    except requests.exceptions.ConnectionError:
+                        print(f"{error_type}: {message}")
+                        print("(Could not reach the local DevMentor service — is it running? "
+                              "Start it with: uvicorn local_service.main:app --reload --port 8765)")
+                else:
+                    print(f"(suppressed — same error seen recently) {error_type}: {message}")
         else:
             print("An error occurred but could not be parsed.")
     else:

@@ -41,3 +41,9 @@ Before an error message is fingerprinted, stored, or sent anywhere — even to t
 ## Where Sanitization Happens in the Pipeline
 
 Sanitization runs in dmrun.py, immediately after parsing the error and before fingerprinting. This ordering is deliberate: fingerprinting the sanitized text (rather than the raw text) means the fingerprint reflects the meaningful content of the error, not incidental sensitive details like a username in a file path — and guarantees no sensitive data ever reaches the fingerprint, the debounce state file, or any downstream service, local or (in the future) cloud.
+
+## Risk Scoring (Fail-Closed Safety Net)
+
+After sanitization, `assess_risk()` performs a second, stricter check on the already-sanitized text — scanning for any remaining long alphanumeric run (16+ characters) that might indicate something slipped through the 5 targeted sanitizers. This threshold is deliberately lower than `sanitize_tokens()`'s 20-character cutoff, erring on the side of caution.
+
+If `assess_risk()` returns `"review"`, the error is **not sent anywhere** — it's reported locally in the terminal with a notice, and the request to the local service is skipped entirely. This is the fail-closed principle in practice: when in doubt, don't send it.
