@@ -176,3 +176,29 @@ Known limitations, deliberately accepted (not fixed):
 10. Verified end-to-end with a fake API key in a test script: confirmed via a temporary debug print that the SANITIZED message (with [REDACTED_TOKEN]) is what actually gets fingerprinted and sent — not the raw text. Removed the debug print after confirming.
 
 11. Built local_service/settings.py: load_settings()/save_settings() reading/writing settings.json. Defaults to {privacy_mode: local_only, confidence_threshold: 0.6}. Auto-creates the file with defaults on first run if it doesn't exist yet. Gitignored, since it's a runtime-generated, user-specific config file.
+
+Week 5 — Risk Scorer, Dataset Growth
+
+1. Wrote assess_risk() and 3 tests — all passing in isolation.
+
+2. Found a real gap during a full-project audit: assess_risk() was never actually wired into dmrun.py, despite being discussed and written earlier — the import and the "review" branch were simply missing from the real file. Fixed by adding the risk check right after sanitize(), before fingerprinting: if "review", skip fingerprinting, debounce, and the POST entirely, and report locally.
+
+3. Verified live: a string that survives sanitize() (18 chars, under the 20-char token threshold) but exceeds assess_risk()'s 16-char threshold correctly gets blocked, with no POST reaching the server — confirmed via the uvicorn log showing no new request.
+
+4. Lesson: "we discussed this and I wrote the code" isn't the same as "it's actually in the file." A full audit against the actual plan text caught this before it became a real problem.
+
+#### flagging : 
+key_error is naturally harder to classify from message text alone, since KeyError messages are inherently terse.
+(short, low-context messages)
+
+
+1. Wrote a generate_rows() helper: runs a code snippet as a subprocess, captures and sanitizes the resulting error message, returns a labeled row (or nothing if the snippet didn't actually error).
+
+2. Generated 12-13 examples each for key_error, index_error, type_error, none_type_error, syntax_error, and attribute_error.
+
+3. Real findings from the data itself:
+   - key_error messages are just the missing key name — no shared structure across examples, since Python's KeyError message is inherently terse. Likely the hardest category to learn from text alone.
+   - index_error always produces the exact same message ("list index out of range") regardless of the code — easiest category to learn.
+   - none_type_error messages reliably contain the literal word "NoneType" — this is exactly the signal the ML classifier can use that the rules-based exception-name mapping can't see, since it only looks at the exception class name, not the message text.
+   - type_error and none_type_error share overlapping message wording (e.g. "unsupported operand type(s) for +: 'NoneType' and 'int'") — likely to be a genuinely confusable pair in the confusion matrix.
+
