@@ -5,13 +5,9 @@ unsupported operand type(s) for +: 'int' and 'str',type_error
 'email',key_error
 list index out of range,index_error
 'BuyBook' object has no attribute 'loan',attribute_error
-No module named 'prettytable',module_not_found
-[Errno 2] No such file or directory: 'non_existent_file.txt',file_not_found
 [Errno 13] Permission denied: 'readonly.txt',permission_error
-invalid literal for int() with base 10: 'twenty-five',value_error
 "HTTPConnectionPool(host='127.0.0.1', port=1): Max retries exceeded with url: / (Caused by NewConnectionError(""HTTPConnection(host='127.0.0.1', port=1): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it""))",network_error
 maximum recursion depth exceeded,other_error
-'email',key_error
 'timeout',key_error
 'value',key_error
 'language',key_error
@@ -69,3 +65,22 @@ invalid syntax,syntax_error
 'int' object has no attribute 'strip',attribute_error
 'object' object has no attribute 'missing_method',attribute_error
 'tuple' object has no attribute 'append',attribute_error
+No module named 'prettytable',module_not_found
+[Errno 2] No such file or directory: 'non_existent_file.txt',file_not_found
+invalid literal for int() with base 10: 'twenty-five',value_error
+No module named 'nonexistent_module',module_not_found
+No module named 'fake_package_xyz',module_not_found
+No module named 'missing_lib',module_not_found
+No module named 'banana_framework',module_not_found
+No module named 'ghost_package',module_not_found
+[Errno 2] No such file or directory: 'missing_file.txt',file_not_found
+[Errno 2] No such file or directory: 'does_not_exist.csv',file_not_found
+[Errno 2] No such file or directory: '[REDACTED_PATH]',file_not_found
+[Errno 2] No such file or directory: 'no_such_report.pdf',file_not_found
+[Errno 2] No such file or directory: 'phantom_script.py',file_not_found
+invalid literal for int() with base 10: 'abc',value_error
+invalid literal for int() with base 10: 'twelve',value_error
+could not convert string to float: 'not_a_number',value_error
+invalid literal for int() with base 10: '',value_error
+invalid literal for int() with base 10: '12a',value_error
+"could not convert string to float: '1,000'",value_error
