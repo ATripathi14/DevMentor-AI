@@ -202,3 +202,12 @@ key_error is naturally harder to classify from message text alone, since KeyErro
    - none_type_error messages reliably contain the literal word "NoneType" — this is exactly the signal the ML classifier can use that the rules-based exception-name mapping can't see, since it only looks at the exception class name, not the message text.
    - type_error and none_type_error share overlapping message wording (e.g. "unsupported operand type(s) for +: 'NoneType' and 'int'") — likely to be a genuinely confusable pair in the confusion matrix.
 
+Week 5 — Dataset Finalization 
+
+1. Generated remaining categories (module_not_found, file_not_found, value_error) with 5-6 snippets each, rather than forcing 12 — since these categories still have real but limited natural variety.
+
+2. Decided NOT to generate more examples for permission_error, network_error, and other_error — tested this empirically (tried a permission_error variant via a different code path, got the exact same message as the original) rather than assuming. These categories don't have meaningful message diversity to capture; padding them would just recreate the redundancy problem already fixed elsewhere.
+
+3. Hit a real Jupyter pitfall: re-ran a "load CSV -> concat -> save" cell twice, which doubled several rows since it read the ALREADY-UPDATED file on the second run and appended the same in-memory rows again. Fixed surgically by deduplicating only the affected categories, preserving the deliberately-kept duplicate caps elsewhere. Lesson: cells with file read+write side effects are dangerous to re-run blindly in a notebook — need to track which cells are "already applied" versus safe to re-run.
+
+Final dataset: 85 rows across 12 categories, with counts genuinely reflecting each category's real message diversity (3 for index_error, 13 for type_error) rather than an artificial uniform target.

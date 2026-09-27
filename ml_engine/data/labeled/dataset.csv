@@ -1,13 +1,5 @@
 text,label
-expected ':',syntax_error
-unsupported operand type(s) for +: 'int' and 'str',type_error
-'NoneType' object is not subscriptable,none_type_error
 'email',key_error
-list index out of range,index_error
-'BuyBook' object has no attribute 'loan',attribute_error
-[Errno 13] Permission denied: 'readonly.txt',permission_error
-"HTTPConnectionPool(host='127.0.0.1', port=1): Max retries exceeded with url: / (Caused by NewConnectionError(""HTTPConnection(host='127.0.0.1', port=1): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it""))",network_error
-maximum recursion depth exceeded,other_error
 'timeout',key_error
 'value',key_error
 'language',key_error
@@ -21,11 +13,11 @@ maximum recursion depth exceeded,other_error
 'build',key_error
 list index out of range,index_error
 list index out of range,index_error
+list index out of range,index_error
 unsupported operand type(s) for +: 'int' and 'str',type_error
 "can only concatenate str (not ""int"") to str",type_error
 "can only concatenate list (not ""str"") to list",type_error
 unsupported operand type(s) for +: 'NoneType' and 'int',type_error
-name 'text' is not defined. Did you mean: 'next'?,type_error
 object of type 'int' has no len(),type_error
 unsupported operand type(s) for +: 'dict' and 'dict',type_error
 unsupported operand type(s) for /: 'int' and 'str',type_error
@@ -40,6 +32,7 @@ object of type 'NoneType' has no len(),none_type_error
 'NoneType' object is not subscriptable,none_type_error
 unsupported operand type(s) for +: 'NoneType' and 'int',none_type_error
 'NoneType' object has no attribute 'method',none_type_error
+'NoneType' object is not subscriptable,none_type_error
 'NoneType' object has no attribute 'get',none_type_error
 unsupported operand type(s) for *: 'NoneType' and 'int',none_type_error
 'NoneType' object has no attribute 'id',none_type_error
@@ -49,6 +42,7 @@ invalid syntax,syntax_error
 expected ':',syntax_error
 '(' was never closed,syntax_error
 '(' was never closed,syntax_error
+expected ':',syntax_error
 expected an indented block after function definition on line 1,syntax_error
 expected an indented block after 'if' statement on line 1,syntax_error
 '[' was never closed,syntax_error
@@ -65,9 +59,6 @@ invalid syntax,syntax_error
 'int' object has no attribute 'strip',attribute_error
 'object' object has no attribute 'missing_method',attribute_error
 'tuple' object has no attribute 'append',attribute_error
-No module named 'prettytable',module_not_found
-[Errno 2] No such file or directory: 'non_existent_file.txt',file_not_found
-invalid literal for int() with base 10: 'twenty-five',value_error
 No module named 'nonexistent_module',module_not_found
 No module named 'fake_package_xyz',module_not_found
 No module named 'missing_lib',module_not_found
@@ -84,3 +75,15 @@ could not convert string to float: 'not_a_number',value_error
 invalid literal for int() with base 10: '',value_error
 invalid literal for int() with base 10: '12a',value_error
 "could not convert string to float: '1,000'",value_error
+"HTTPConnectionPool(host='127.0.0.1', port=1): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPConnection(host='127.0.0.1', port=1) at 0x2467aeadb90>, 'Connection to 127.0.0.1 timed out. (connect timeout=1)'))",network_error
+"HTTPConnectionPool(host='127.0.0.1', port=2): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPConnection(host='127.0.0.1', port=2) at 0x1ee1e309d10>, 'Connection to 127.0.0.1 timed out. (connect timeout=1)'))",network_error
+"HTTPConnectionPool(host='localhost', port=9999): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPConnection(host='localhost', port=9999) at 0x28eb2fc9f90>, 'Connection to localhost timed out. (connect timeout=1)'))",network_error
+[Errno 13] Permission denied: 'readonly.txt',permission_error
+[Errno 13] Permission denied: 'readonly.txt',permission_error
+This feature is not built yet,other_error
+Result too large to represent,other_error
+"HTTPConnectionPool(host='127.0.0.1', port=3): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPConnection(host='127.0.0.1', port=3) at 0x2d3d3c6dc50>, 'Connection to 127.0.0.1 timed out. (connect timeout=1)'))",network_error
+"HTTPConnectionPool(host='192.0.2.1', port=80): Read timed out. (read timeout=1)",network_error
+[Errno 13] Permission denied: 'readonly.txt',permission_error
+Something went wrong mathematically,other_error
+Could not find the requested item,other_error
