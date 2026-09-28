@@ -211,3 +211,29 @@ Week 5 — Dataset Finalization
 3. Hit a real Jupyter pitfall: re-ran a "load CSV -> concat -> save" cell twice, which doubled several rows since it read the ALREADY-UPDATED file on the second run and appended the same in-memory rows again. Fixed surgically by deduplicating only the affected categories, preserving the deliberately-kept duplicate caps elsewhere. Lesson: cells with file read+write side effects are dangerous to re-run blindly in a notebook — need to track which cells are "already applied" versus safe to re-run.
 
 Final dataset: 85 rows across 12 categories, with counts genuinely reflecting each category's real message diversity (3 for index_error, 13 for type_error) rather than an artificial uniform target.
+
+Week 5 — Notebook Cleanup and Final Dataset (continued)
+
+1. Notebook had become hard to trust after many rounds of patches, re-runs, and accidental double-merges. Rebuilt it cleanly from scratch: renamed the old one to _scratch for reference, wrote a new notebook containing only the final, correct, working cells in clear order (path fix, imports, snippet lists, generation, trim, save, chart, split).
+
+2. Confirmed via the clean rebuild that permission_error and other_error (both at 2 examples) were the two categories missing from the test set — a real, reproducible structural issue, not a one-off fluke from the earlier messy notebook.
+
+3. Added 1-3 more examples to network_error, permission_error, and other_error specifically to make them reliably evaluable. Confirmed all 12 categories now appear in both train and test sets after the stratified split.
+
+Week 5 — Model Training
+
+1. Vectorized training data with TfidfVectorizer (max_features=5000, ngram_range=(1,2)). Trained Logistic Regression: macro F1 = 0.86, accuracy = 0.89.
+
+2. Trained Linear SVM for comparison: macro F1 = 0.77, accuracy = 0.78 — worse across the board. Likely because with only ~70 training examples across 12 categories, there isn't enough data yet for SVM's decision-boundary approach to have an advantage over Logistic Regression's probability-based approach.
+
+3. Confusion matrix revealed two real, explainable weaknesses:
+   - other_error never gets predicted at all — its lone test example 
+     got misclassified as key_error. Makes sense given it's a 
+     deliberate catch-all with almost no consistent training signal.
+   - type_error and none_type_error get confused with each other once, 
+     due to genuinely overlapping training vocabulary ("NoneType" 
+     appearing in both categories' messages).
+
+4. Chose Logistic Regression as the primary model based on the comparison numbers.
+
+5. Wrote ml_engine/train.py: a standalone script reproducing the full pipeline (load -> split -> vectorize -> train -> evaluate -> save). Verified genuine reproducibility by deleting the saved joblib files and re-running the script — it recreated them, with the classification report output byte-for-byte identical to the notebook's original run, confirming random_state=42 makes the whole pipeline deterministic.
