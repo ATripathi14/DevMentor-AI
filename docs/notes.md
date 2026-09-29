@@ -237,3 +237,23 @@ Week 5 — Model Training
 4. Chose Logistic Regression as the primary model based on the comparison numbers.
 
 5. Wrote ml_engine/train.py: a standalone script reproducing the full pipeline (load -> split -> vectorize -> train -> evaluate -> save). Verified genuine reproducibility by deleting the saved joblib files and re-running the script — it recreated them, with the classification report output byte-for-byte identical to the notebook's original run, confirming random_state=42 makes the whole pipeline deterministic.
+
+Week 6 — Cross-validation and its outcome
+
+Single 80/20 splits gave inconsistent macro F1 (0.86, 0.92, 0.82) because most categories have only 1-3 test examples, so one flipped prediction swings the score by 5-10 points. Ran 3-fold stratified cross-validation instead: every row gets predicted exactly once by a model that never saw it, giving a stable score across all 96 rows.
+
+Result: macro F1 = 0.807. other_error scored 0.00 across all 8 examples, tested this time, not a single unlucky split. Its 8 examples are unrelated sentences with no shared vocabulary, so TF-IDF has nothing consistent to learn. type_error (0.55) and none_type_error (0.73) remain confused with each other, as expected from their "NoneType" vocabulary.
+
+Decision: 0.807 is the reported macro F1, not the higher single-split numbers seen earlier. Single splits on a dataset this small are not reliable enough to report on their own.
+
+#### Fixing key_error and other_error with error_type
+
+Root cause: key_error's message is always a single unrelated word (the missing key). other_error's messages were 14 completely unrelated sentences from different exception types. Neither had any consistent vocabulary across its own examples, so TF-IDF had nothing to learn regardless of how many examples were added.
+
+The message alone was never going to be enough for these categories. parse_error() already extracts error_type separately, but the classifier was only ever given message. Changed the training text to "{error_type} {message}" instead of message alone.
+
+Result: key_error went from F1 0.00 to 1.00. other_error went from 0.00 to 0.90. Macro F1 (3-fold CV) rose from 0.807 to 0.925, same evaluation method both times.
+
+type_error (0.63) and none_type_error (0.73) are still confused with each other: both share error_type "TypeError",so including the type doesn't help distinguish them. This is the one remaining confusion that reflects a genuine ambiguity in the message text.
+
+Decision: for live inference later, feed the classifier "{error_type} {message}", matching training. Where confidence is low (expected mainly for the type_error / none_type_error boundary), route to a confidence threshold rather than trusting the ML prediction .

@@ -1,97 +1,103 @@
 text,label
-'email',key_error
-'timeout',key_error
-'value',key_error
-'language',key_error
-'body',key_error
-'missing_key',key_error
-'Authorization',key_error
-'limit',key_error
-'timestamp',key_error
-'session_token',key_error
-'quiet',key_error
-'build',key_error
-list index out of range,index_error
-list index out of range,index_error
-list index out of range,index_error
-unsupported operand type(s) for +: 'int' and 'str',type_error
-"can only concatenate str (not ""int"") to str",type_error
-"can only concatenate list (not ""str"") to list",type_error
-unsupported operand type(s) for +: 'NoneType' and 'int',type_error
-object of type 'int' has no len(),type_error
-unsupported operand type(s) for +: 'dict' and 'dict',type_error
-unsupported operand type(s) for /: 'int' and 'str',type_error
-"can only concatenate list (not ""int"") to list",type_error
-'str' object is not callable,type_error
-'int' object is not subscriptable,type_error
-unsupported operand type(s) for +: 'bool' and 'str',type_error
-'NoneType' object has no attribute 'upper',none_type_error
-'NoneType' object is not subscriptable,none_type_error
-object of type 'NoneType' has no len(),none_type_error
-'NoneType' object has no attribute 'name',none_type_error
-'NoneType' object is not subscriptable,none_type_error
-unsupported operand type(s) for +: 'NoneType' and 'int',none_type_error
-'NoneType' object has no attribute 'method',none_type_error
-'NoneType' object is not subscriptable,none_type_error
-'NoneType' object has no attribute 'get',none_type_error
-unsupported operand type(s) for *: 'NoneType' and 'int',none_type_error
-'NoneType' object has no attribute 'id',none_type_error
-'NoneType' object has no attribute 'append',none_type_error
-expected ':',syntax_error
-invalid syntax,syntax_error
-expected ':',syntax_error
-'(' was never closed,syntax_error
-'(' was never closed,syntax_error
-expected ':',syntax_error
-expected an indented block after function definition on line 1,syntax_error
-expected an indented block after 'if' statement on line 1,syntax_error
-'[' was never closed,syntax_error
-invalid syntax,syntax_error
-'int' object has no attribute 'append',attribute_error
-'str' object has no attribute 'push',attribute_error
-'list' object has no attribute 'get',attribute_error
-'int' object has no attribute 'upper',attribute_error
-'dict' object has no attribute 'append',attribute_error
-'float' object has no attribute 'split',attribute_error
-'bool' object has no attribute 'lower',attribute_error
-'str' object has no attribute 'add',attribute_error
-'list' object has no attribute 'keys',attribute_error
-'int' object has no attribute 'strip',attribute_error
-'object' object has no attribute 'missing_method',attribute_error
-'tuple' object has no attribute 'append',attribute_error
-No module named 'nonexistent_module',module_not_found
-No module named 'fake_package_xyz',module_not_found
-No module named 'missing_lib',module_not_found
-No module named 'banana_framework',module_not_found
-No module named 'ghost_package',module_not_found
-[Errno 2] No such file or directory: 'missing_file.txt',file_not_found
-[Errno 2] No such file or directory: 'does_not_exist.csv',file_not_found
-[Errno 2] No such file or directory: '[REDACTED_PATH]',file_not_found
-[Errno 2] No such file or directory: 'no_such_report.pdf',file_not_found
-[Errno 2] No such file or directory: 'phantom_script.py',file_not_found
-invalid literal for int() with base 10: 'abc',value_error
-invalid literal for int() with base 10: 'twelve',value_error
-could not convert string to float: 'not_a_number',value_error
-invalid literal for int() with base 10: '',value_error
-invalid literal for int() with base 10: '12a',value_error
-"could not convert string to float: '1,000'",value_error
-invalid literal for int() with base 10: 'hello world',value_error
-could not convert string to float: '$100',value_error
-invalid literal for int() with base 10: ' ',value_error
-non-hexadecimal number found in fromhex() arg at position 0,value_error
-"HTTPConnectionPool(host='127.0.0.1', port=1): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPConnection(host='127.0.0.1', port=1) at 0x16ef9f3dad0>, 'Connection to 127.0.0.1 timed out. (connect timeout=1)'))",network_error
-"HTTPConnectionPool(host='127.0.0.1', port=2): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPConnection(host='127.0.0.1', port=2) at 0x192e0669d10>, 'Connection to 127.0.0.1 timed out. (connect timeout=1)'))",network_error
-"HTTPConnectionPool(host='localhost', port=9999): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPConnection(host='localhost', port=9999) at 0x25c35479ed0>, 'Connection to localhost timed out. (connect timeout=1)'))",network_error
-"HTTPConnectionPool(host='127.0.0.1', port=3): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPConnection(host='127.0.0.1', port=3) at 0x2c5f151dc90>, 'Connection to 127.0.0.1 timed out. (connect timeout=1)'))",network_error
-"HTTPConnectionPool(host='192.0.2.1', port=80): Read timed out. (read timeout=1)",network_error
-[Errno 13] Permission denied: 'readonly.txt',permission_error
-[Errno 13] Permission denied: 'readonly.txt',permission_error
-[Errno 13] Permission denied: 'readonly.txt',permission_error
-This feature is not built yet,other_error
-Result too large to represent,other_error
-Something went wrong mathematically,other_error
-Could not find the requested item,other_error
-Something unexpected happened during execution,other_error
-No more items to iterate,other_error
-Buffer operation could not be performed,other_error
-Unexpected end of input,other_error
+KeyError 'email',key_error
+KeyError 'timeout',key_error
+KeyError 'value',key_error
+KeyError 'language',key_error
+KeyError 'body',key_error
+KeyError 'missing_key',key_error
+KeyError 'Authorization',key_error
+KeyError 'limit',key_error
+KeyError 'timestamp',key_error
+KeyError 'session_token',key_error
+KeyError 'quiet',key_error
+KeyError 'build',key_error
+IndexError list index out of range,index_error
+IndexError list index out of range,index_error
+IndexError list index out of range,index_error
+TypeError unsupported operand type(s) for +: 'int' and 'str',type_error
+"TypeError can only concatenate str (not ""int"") to str",type_error
+"TypeError can only concatenate list (not ""str"") to list",type_error
+TypeError unsupported operand type(s) for +: 'NoneType' and 'int',type_error
+TypeError object of type 'int' has no len(),type_error
+TypeError unsupported operand type(s) for +: 'dict' and 'dict',type_error
+TypeError unsupported operand type(s) for /: 'int' and 'str',type_error
+"TypeError can only concatenate list (not ""int"") to list",type_error
+TypeError 'str' object is not callable,type_error
+TypeError 'int' object is not subscriptable,type_error
+TypeError unsupported operand type(s) for +: 'bool' and 'str',type_error
+AttributeError 'NoneType' object has no attribute 'upper',none_type_error
+TypeError 'NoneType' object is not subscriptable,none_type_error
+TypeError object of type 'NoneType' has no len(),none_type_error
+AttributeError 'NoneType' object has no attribute 'name',none_type_error
+TypeError 'NoneType' object is not subscriptable,none_type_error
+TypeError unsupported operand type(s) for +: 'NoneType' and 'int',none_type_error
+AttributeError 'NoneType' object has no attribute 'method',none_type_error
+TypeError 'NoneType' object is not subscriptable,none_type_error
+AttributeError 'NoneType' object has no attribute 'get',none_type_error
+TypeError unsupported operand type(s) for *: 'NoneType' and 'int',none_type_error
+AttributeError 'NoneType' object has no attribute 'id',none_type_error
+AttributeError 'NoneType' object has no attribute 'append',none_type_error
+SyntaxError expected ':',syntax_error
+SyntaxError invalid syntax,syntax_error
+SyntaxError expected ':',syntax_error
+SyntaxError '(' was never closed,syntax_error
+SyntaxError '(' was never closed,syntax_error
+SyntaxError expected ':',syntax_error
+IndentationError expected an indented block after function definition on line 1,syntax_error
+IndentationError expected an indented block after 'if' statement on line 1,syntax_error
+SyntaxError '[' was never closed,syntax_error
+SyntaxError invalid syntax,syntax_error
+AttributeError 'int' object has no attribute 'append',attribute_error
+AttributeError 'str' object has no attribute 'push',attribute_error
+AttributeError 'list' object has no attribute 'get',attribute_error
+AttributeError 'int' object has no attribute 'upper',attribute_error
+AttributeError 'dict' object has no attribute 'append',attribute_error
+AttributeError 'float' object has no attribute 'split',attribute_error
+AttributeError 'bool' object has no attribute 'lower',attribute_error
+AttributeError 'str' object has no attribute 'add',attribute_error
+AttributeError 'list' object has no attribute 'keys',attribute_error
+AttributeError 'int' object has no attribute 'strip',attribute_error
+AttributeError 'object' object has no attribute 'missing_method',attribute_error
+AttributeError 'tuple' object has no attribute 'append',attribute_error
+ModuleNotFoundError No module named 'nonexistent_module',module_not_found
+ModuleNotFoundError No module named 'fake_package_xyz',module_not_found
+ModuleNotFoundError No module named 'missing_lib',module_not_found
+ModuleNotFoundError No module named 'banana_framework',module_not_found
+ModuleNotFoundError No module named 'ghost_package',module_not_found
+FileNotFoundError [Errno 2] No such file or directory: 'missing_file.txt',file_not_found
+FileNotFoundError [Errno 2] No such file or directory: 'does_not_exist.csv',file_not_found
+FileNotFoundError [Errno 2] No such file or directory: '[REDACTED_PATH]',file_not_found
+FileNotFoundError [Errno 2] No such file or directory: 'no_such_report.pdf',file_not_found
+FileNotFoundError [Errno 2] No such file or directory: 'phantom_script.py',file_not_found
+ValueError invalid literal for int() with base 10: 'abc',value_error
+ValueError invalid literal for int() with base 10: 'twelve',value_error
+ValueError could not convert string to float: 'not_a_number',value_error
+ValueError invalid literal for int() with base 10: '',value_error
+ValueError invalid literal for int() with base 10: '12a',value_error
+"ValueError could not convert string to float: '1,000'",value_error
+ValueError invalid literal for int() with base 10: 'hello world',value_error
+ValueError could not convert string to float: '$100',value_error
+ValueError invalid literal for int() with base 10: ' ',value_error
+ValueError non-hexadecimal number found in fromhex() arg at position 0,value_error
+"requests.exceptions.ConnectTimeout HTTPConnectionPool(host='127.0.0.1', port=1): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPConnection(host='127.0.0.1', port=1) at 0x1bda620db90>, 'Connection to 127.0.0.1 timed out. (connect timeout=1)'))",network_error
+"requests.exceptions.ConnectTimeout HTTPConnectionPool(host='127.0.0.1', port=2): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPConnection(host='127.0.0.1', port=2) at 0x20c49ccdd10>, 'Connection to 127.0.0.1 timed out. (connect timeout=1)'))",network_error
+"requests.exceptions.ConnectTimeout HTTPConnectionPool(host='localhost', port=9999): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPConnection(host='localhost', port=9999) at 0x1f638889d50>, 'Connection to localhost timed out. (connect timeout=1)'))",network_error
+"requests.exceptions.ConnectTimeout HTTPConnectionPool(host='127.0.0.1', port=3): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPConnection(host='127.0.0.1', port=3) at 0x1dbe58edcd0>, 'Connection to 127.0.0.1 timed out. (connect timeout=1)'))",network_error
+"requests.exceptions.ConnectTimeout HTTPConnectionPool(host='192.0.2.1', port=80): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPConnection(host='192.0.2.1', port=80) at 0x1e7d9e39d50>, 'Connection to 192.0.2.1 timed out. (connect timeout=1)'))",network_error
+PermissionError [Errno 13] Permission denied: 'readonly.txt',permission_error
+PermissionError [Errno 13] Permission denied: 'readonly.txt',permission_error
+PermissionError [Errno 13] Permission denied: 'readonly.txt',permission_error
+NotImplementedError This feature is not built yet,other_error
+OverflowError Result too large to represent,other_error
+ArithmeticError Something went wrong mathematically,other_error
+LookupError Could not find the requested item,other_error
+RuntimeError Something unexpected happened during execution,other_error
+StopIteration No more items to iterate,other_error
+BufferError Buffer operation could not be performed,other_error
+EOFError Unexpected end of input,other_error
+RuntimeError Failed to initialize the connection pool,other_error
+RuntimeError Unexpected state reached during processing,other_error
+NotImplementedError This feature is not yet supported,other_error
+ZeroDivisionError division by zero,other_error
+UnicodeDecodeError 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte,other_error
+ImportError cannot import name 'missing_func' from 'some_module',other_error
