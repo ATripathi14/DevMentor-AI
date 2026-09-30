@@ -18,6 +18,15 @@ def sanitize_tokens(text: str) -> str:
     return re.sub(r"\b[A-Za-z0-9_-]{20,}\b", "[REDACTED_TOKEN]", text)
 
 
+def sanitize_object_addresses(text: str) -> str:
+    """Replaces Python object memory addresses (e.g. <HTTPConnection object 
+    at 0x1bda620db90>) with [REDACTED_ADDRESS]. These are assigned fresh by 
+    the OS on every run, so they're non-deterministic and carry no real 
+    information — leaving them in causes training data (and debounce 
+    fingerprints) to differ between runs for no meaningful reason."""
+    return re.sub(r"0x[0-9a-fA-F]{6,}", "[REDACTED_ADDRESS]", text)
+
+
 def sanitize_env_vars(text: str) -> str:
     """Redact the VALUE in KEY=VALUE assignments, keep the key name visible."""
     return re.sub(r"([A-Z_][A-Z0-9_]*=)\S+", r"\1[REDACTED_VALUE]", text)
@@ -32,6 +41,7 @@ def sanitize_urls(text: str) -> str:
 def sanitize(text: str) -> str:
     """Run all sanitizers in order. URLs first, paths last — order avoids one regex eating another's target."""
     text = sanitize_urls(text)
+    text = sanitize_object_addresses(text)
     text = sanitize_emails(text)
     text = sanitize_tokens(text)
     text = sanitize_env_vars(text)

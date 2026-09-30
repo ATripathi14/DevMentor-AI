@@ -79,11 +79,11 @@ ValueError invalid literal for int() with base 10: 'hello world',value_error
 ValueError could not convert string to float: '$100',value_error
 ValueError invalid literal for int() with base 10: ' ',value_error
 ValueError non-hexadecimal number found in fromhex() arg at position 0,value_error
-"requests.exceptions.ConnectTimeout HTTPConnectionPool(host='127.0.0.1', port=1): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPConnection(host='127.0.0.1', port=1) at 0x1bda620db90>, 'Connection to 127.0.0.1 timed out. (connect timeout=1)'))",network_error
-"requests.exceptions.ConnectTimeout HTTPConnectionPool(host='127.0.0.1', port=2): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPConnection(host='127.0.0.1', port=2) at 0x20c49ccdd10>, 'Connection to 127.0.0.1 timed out. (connect timeout=1)'))",network_error
-"requests.exceptions.ConnectTimeout HTTPConnectionPool(host='localhost', port=9999): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPConnection(host='localhost', port=9999) at 0x1f638889d50>, 'Connection to localhost timed out. (connect timeout=1)'))",network_error
-"requests.exceptions.ConnectTimeout HTTPConnectionPool(host='127.0.0.1', port=3): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPConnection(host='127.0.0.1', port=3) at 0x1dbe58edcd0>, 'Connection to 127.0.0.1 timed out. (connect timeout=1)'))",network_error
-"requests.exceptions.ConnectTimeout HTTPConnectionPool(host='192.0.2.1', port=80): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPConnection(host='192.0.2.1', port=80) at 0x1e7d9e39d50>, 'Connection to 192.0.2.1 timed out. (connect timeout=1)'))",network_error
+"requests.exceptions.ConnectTimeout HTTPConnectionPool(host='127.0.0.1', port=1): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPConnection(host='127.0.0.1', port=1) at [REDACTED_ADDRESS]>, 'Connection to 127.0.0.1 timed out. (connect timeout=1)'))",network_error
+"requests.exceptions.ConnectTimeout HTTPConnectionPool(host='127.0.0.1', port=2): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPConnection(host='127.0.0.1', port=2) at [REDACTED_ADDRESS]>, 'Connection to 127.0.0.1 timed out. (connect timeout=1)'))",network_error
+"requests.exceptions.ConnectTimeout HTTPConnectionPool(host='localhost', port=9999): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPConnection(host='localhost', port=9999) at [REDACTED_ADDRESS]>, 'Connection to localhost timed out. (connect timeout=1)'))",network_error
+"requests.exceptions.ConnectTimeout HTTPConnectionPool(host='127.0.0.1', port=3): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPConnection(host='127.0.0.1', port=3) at [REDACTED_ADDRESS]>, 'Connection to 127.0.0.1 timed out. (connect timeout=1)'))",network_error
+"requests.exceptions.ReadTimeout HTTPConnectionPool(host='192.0.2.1', port=80): Read timed out. (read timeout=1)",network_error
 PermissionError [Errno 13] Permission denied: 'readonly.txt',permission_error
 PermissionError [Errno 13] Permission denied: 'readonly.txt',permission_error
 PermissionError [Errno 13] Permission denied: 'readonly.txt',permission_error

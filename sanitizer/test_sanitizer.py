@@ -1,6 +1,6 @@
 from sanitizer.sanitizer import (
     sanitize_paths, sanitize_emails, sanitize_tokens,
-    sanitize_env_vars, sanitize_urls, sanitize, assess_risk,
+    sanitize_env_vars, sanitize_urls, sanitize, assess_risk, sanitize_object_addresses,
 )
 
 # --- paths ---
@@ -102,6 +102,27 @@ def test_assess_risk_flags_suspicious_leftover_pattern():
     """Text with a long alphanumeric run that slipped through should be flagged for review."""
     text = sanitize("Something with a weird identifier abc123xyz789fake")
     assert assess_risk(text) == "review"
+def test_object_address_is_redacted():
+    """A Python object memory address should be replaced with [REDACTED_ADDRESS]."""
+    text = "Caused by <HTTPConnection object at 0x1bda620db90>"
+    result = sanitize_object_addresses(text)
+    assert "[REDACTED_ADDRESS]" in result
+    assert "0x1bda620db90" not in result
+
+
+def test_text_without_address_is_not_modified():
+    """Text with no memory address should be left completely unchanged."""
+    text = "This has no object address in it."
+    result = sanitize_object_addresses(text)
+    assert result == text
+
+
+def test_sanitize_chain_includes_address_redaction():
+    """The master sanitize() should also catch object addresses as part of the full chain."""
+    text = "ConnectTimeoutError(<HTTPConnection(host='127.0.0.1', port=1) at 0x172f43adc90>, 'timed out')"
+    result = sanitize(text)
+    assert "[REDACTED_ADDRESS]" in result
+    assert "0x172f43adc90" not in result
 
 def test_assess_risk_handles_already_redacted_text_as_safe():
     """Text containing only redaction placeholders (e.g. [REDACTED_PATH]) should be safe,
@@ -110,7 +131,7 @@ def test_assess_risk_handles_already_redacted_text_as_safe():
     assert assess_risk(text) == "safe"
 
 # --- master sanitize() ---
-def test_sanitize_chains_all_five_functions_together():
+def test_sanitize_chains_all_functions_together():
     text = (
         "Error in /home/user/secret.py — contact john.doe@example.com. "
         "Key: sk_live_51H8xK2eZ9mFq3RtY7pL. export SECRET_KEY=abc123def456. "
