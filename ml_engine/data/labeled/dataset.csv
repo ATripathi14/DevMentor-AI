@@ -17,14 +17,25 @@ IndexError list index out of range,index_error
 TypeError unsupported operand type(s) for +: 'int' and 'str',type_error
 "TypeError can only concatenate str (not ""int"") to str",type_error
 "TypeError can only concatenate list (not ""str"") to list",type_error
-TypeError unsupported operand type(s) for +: 'NoneType' and 'int',type_error
-TypeError object of type 'int' has no len(),type_error
 TypeError unsupported operand type(s) for +: 'dict' and 'dict',type_error
-TypeError unsupported operand type(s) for /: 'int' and 'str',type_error
-"TypeError can only concatenate list (not ""int"") to list",type_error
+TypeError unsupported operand type(s) for +: 'bool' and 'str',type_error
+TypeError unsupported operand type(s) for +: 'float' and 'str',type_error
+"TypeError can only concatenate tuple (not ""str"") to tuple",type_error
+TypeError unsupported operand type(s) for +: 'set' and 'str',type_error
+TypeError unsupported operand type(s) for +: 'int' and 'NoneType',type_error
+"TypeError can only concatenate str (not ""float"") to str",type_error
+"TypeError can only concatenate list (not ""dict"") to list",type_error
+"TypeError can only concatenate tuple (not ""list"") to tuple",type_error
+TypeError object of type 'int' has no len(),type_error
 TypeError 'str' object is not callable,type_error
 TypeError 'int' object is not subscriptable,type_error
-TypeError unsupported operand type(s) for +: 'bool' and 'str',type_error
+TypeError 'float' object is not subscriptable,type_error
+TypeError 'bool' object is not subscriptable,type_error
+TypeError 'int' object is not callable,type_error
+TypeError unsupported operand type(s) for -: 'int' and 'str',type_error
+TypeError can't multiply sequence by non-int of type 'list',type_error
+TypeError unsupported operand type(s) for -: 'list' and 'list',type_error
+TypeError unsupported operand type(s) for /: 'int' and 'str',type_error
 AttributeError 'NoneType' object has no attribute 'upper',none_type_error
 TypeError 'NoneType' object is not subscriptable,none_type_error
 TypeError object of type 'NoneType' has no len(),none_type_error
@@ -57,8 +68,15 @@ AttributeError 'bool' object has no attribute 'lower',attribute_error
 AttributeError 'str' object has no attribute 'add',attribute_error
 AttributeError 'list' object has no attribute 'keys',attribute_error
 AttributeError 'int' object has no attribute 'strip',attribute_error
-AttributeError 'object' object has no attribute 'missing_method',attribute_error
 AttributeError 'tuple' object has no attribute 'append',attribute_error
+AttributeError 'set' object has no attribute 'index',attribute_error
+AttributeError 'float' object has no attribute 'encode',attribute_error
+AttributeError 'bool' object has no attribute 'items',attribute_error
+AttributeError 'tuple' object has no attribute 'pop',attribute_error
+AttributeError 'dict' object has no attribute 'sort',attribute_error
+AttributeError 'str' object has no attribute 'extend',attribute_error
+AttributeError 'list' object has no attribute 'update',attribute_error
+AttributeError 'object' object has no attribute 'missing_method',attribute_error
 ModuleNotFoundError No module named 'nonexistent_module',module_not_found
 ModuleNotFoundError No module named 'fake_package_xyz',module_not_found
 ModuleNotFoundError No module named 'missing_lib',module_not_found
@@ -79,6 +97,13 @@ ValueError invalid literal for int() with base 10: 'hello world',value_error
 ValueError could not convert string to float: '$100',value_error
 ValueError invalid literal for int() with base 10: ' ',value_error
 ValueError non-hexadecimal number found in fromhex() arg at position 0,value_error
+ValueError invalid literal for int() with base 10: '3.14',value_error
+ValueError invalid literal for int() with base 10: '--5',value_error
+ValueError could not convert string to float: '1e',value_error
+ValueError 9 is not in list,value_error
+ValueError list.remove(x): x not in list,value_error
+"ValueError int() base must be >= 2 and <= 36, or 0",value_error
+ValueError could not convert string to float: 'inf_',value_error
 "requests.exceptions.ConnectTimeout HTTPConnectionPool(host='127.0.0.1', port=1): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPConnection(host='127.0.0.1', port=1) at [REDACTED_ADDRESS]>, 'Connection to 127.0.0.1 timed out. (connect timeout=1)'))",network_error
 "requests.exceptions.ConnectTimeout HTTPConnectionPool(host='127.0.0.1', port=2): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPConnection(host='127.0.0.1', port=2) at [REDACTED_ADDRESS]>, 'Connection to 127.0.0.1 timed out. (connect timeout=1)'))",network_error
 "requests.exceptions.ConnectTimeout HTTPConnectionPool(host='localhost', port=9999): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPConnection(host='localhost', port=9999) at [REDACTED_ADDRESS]>, 'Connection to localhost timed out. (connect timeout=1)'))",network_error
@@ -87,17 +112,22 @@ ValueError non-hexadecimal number found in fromhex() arg at position 0,value_err
 PermissionError [Errno 13] Permission denied: 'readonly.txt',permission_error
 PermissionError [Errno 13] Permission denied: 'readonly.txt',permission_error
 PermissionError [Errno 13] Permission denied: 'readonly.txt',permission_error
-NotImplementedError This feature is not built yet,other_error
-OverflowError Result too large to represent,other_error
 ArithmeticError Something went wrong mathematically,other_error
 LookupError Could not find the requested item,other_error
-RuntimeError Something unexpected happened during execution,other_error
-StopIteration No more items to iterate,other_error
-BufferError Buffer operation could not be performed,other_error
-EOFError Unexpected end of input,other_error
 RuntimeError Failed to initialize the connection pool,other_error
 RuntimeError Unexpected state reached during processing,other_error
 NotImplementedError This feature is not yet supported,other_error
+NotImplementedError This feature is not built yet,other_error
+OverflowError Result too large to represent,other_error
+StopIteration No more items to iterate,other_error
+BufferError Buffer operation could not be performed,other_error
+EOFError Unexpected end of input,other_error
 ZeroDivisionError division by zero,other_error
-UnicodeDecodeError 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte,other_error
 ImportError cannot import name 'missing_func' from 'some_module',other_error
+RecursionError maximum recursion depth exceeded,other_error
+ReferenceError weakly-referenced object no longer exists,other_error
+SystemError unexpected internal error occurred,other_error
+UnboundLocalError local variable 'x' referenced before assignment,other_error
+FloatingPointError floating point operation failed,other_error
+IndentationError unexpected indent,other_error
+TabError inconsistent use of tabs and spaces in indentation,other_error

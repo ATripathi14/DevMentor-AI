@@ -257,3 +257,11 @@ Result: key_error went from F1 0.00 to 1.00. other_error went from 0.00 to 0.90.
 type_error (0.63) and none_type_error (0.73) are still confused with each other: both share error_type "TypeError",so including the type doesn't help distinguish them. This is the one remaining confusion that reflects a genuine ambiguity in the message text.
 
 Decision: for live inference later, feed the classifier "{error_type} {message}", matching training. Where confidence is low (expected mainly for the type_error / none_type_error boundary), route to a confidence threshold rather than trusting the ML prediction .
+
+## File status note (added during model switch)
+
+Three training notebooks exist in ml_engine/notebooks/:training_and_evaluation_scratch.ipynb and training_and_evaluation_scratch2.ipynb are archived history only, both now have a guard cell that raises an error if run, to prevent accidentally overwriting current data with stale output.
+
+training_and_evaluation.ipynb is the single current, authoritative notebook. It and ml_engine/train.py are the only things that should ever write to dataset.csv, classifier.joblib, or vectorizer.joblib. As long as that stays true, whatever those three files currently contain on disk is correct by construction — there is no other writer.
+
+Current model: Linear SVM wrapped in CalibratedClassifierCV, trained on a 132-row dataset. Chosen over Logistic Regression after dataset expansion widened the performance gap to 0.957 vs 0.801 macro F1 (3-fold CV). See Model Comparison and Decision section in the notebook for full reasoning.
