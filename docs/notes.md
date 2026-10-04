@@ -265,3 +265,19 @@ Three training notebooks exist in ml_engine/notebooks/:training_and_evaluation_s
 training_and_evaluation.ipynb is the single current, authoritative notebook. It and ml_engine/train.py are the only things that should ever write to dataset.csv, classifier.joblib, or vectorizer.joblib. As long as that stays true, whatever those three files currently contain on disk is correct by construction — there is no other writer.
 
 Current model: Linear SVM wrapped in CalibratedClassifierCV, trained on a 132-row dataset. Chosen over Logistic Regression after dataset expansion widened the performance gap to 0.957 vs 0.801 macro F1 (3-fold CV). See Model Comparison and Decision section in the notebook for full reasoning.
+
+Week 6 — ML classifier wired into the live pipeline
+
+Added confidence-threshold routing to /analyze: the ML model (loaded 
+via classifier_service.py) always runs first; if its confidence meets 
+or exceeds settings.json's confidence_threshold (0.6), its category is 
+used (source: "ml"). Otherwise, falls back to the existing 
+normalize_error_type() rules mapping (source: "rules").
+
+Verified two real cases:
+1. Known-but-ambiguous: TypeError with 'NoneType' in the message, confidence 0.54 — correctly fell below threshold, routed to rules, matching the rules engine's existing correct behavior for this case.
+2. Unknown to both systems: ConnectionResetError, confidence 0.55 — the ML model and the rules engine independently agreed on other_error via two different mechanisms (low similarity to any trained category vs. the rules engine's explicit default), without coordinating with each other.
+
+/latest and /analyze responses now include confidence and source. 
+Confirmed the widget handles the updated response shape correctly 
+with no changes needed.

@@ -1,12 +1,12 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from local_service.explainer import EXPLANATIONS, normalize_error_type
+from local_service.classifier_service import predict as ml_predict
+from local_service.settings import load_settings
 
 
 app = FastAPI()
 
-# Stores the most recent /analyze result so other clients (e.g. a future
-# widget) can poll for it without needing the original request.
 latest_result = {}
 
 
@@ -20,18 +20,31 @@ class AnalyzeRequest(BaseModel):
     error_type: str
     message: str
     fingerprint: str
-    
+
 
 @app.post("/analyze")
 def analyze(request: AnalyzeRequest):
-    """Looks up an explanation for the given error type. Falls back to a generic message for unrecognized types."""
-    category = normalize_error_type(request.error_type)
+    """Classifies the error using the ML model when confident, falling back
+    to the rules-based mapping when the model's confidence is too low."""
+    settings = load_settings()
+    threshold = settings.get("confidence_threshold", 0.6)
+
+    ml_result = ml_predict(request.error_type, request.message)
+
+    if ml_result["confidence"] >= threshold:
+        category = ml_result["category"]
+        source = "ml"
+    else:
+        category = normalize_error_type(request.error_type)
+        source = "rules"
+
     explanation = EXPLANATIONS.get(category, "An error occurred, but no specific explanation is available yet.")
 
     result = {
         "explanation": explanation,
         "category": category,
-        "source": "rules",
+        "source": source,
+        "confidence": ml_result["confidence"],
         "fingerprint": request.fingerprint,
     }
 
