@@ -57,11 +57,11 @@ The key feature is zero-click detection: the widget can respond before you've re
 
 ## How It Works
 
-1. **Capture** — You run your program through `dmrun` (e.g. `dmrun python app.py`). It transparently wraps the process and captures stdout/stderr/exit code the moment something fails. (An optional, off-by-default OCR mode can watch a user-selected terminal region for cases where a wrapper isn't practical — see [Privacy Model](#privacy-model).)
-2. **Sanitize** — A local privacy engine strips paths, tokens, emails, credentials, and env values before anything is stored or analyzed.
-3. **Understand** — A local ML classifier identifies the error category (and filters out normal/non-error output) in milliseconds. A similarity engine checks whether this error has been explained before.
-4. **Explain** — A floating, always-on-top widget shows a plain-English explanation and suggested next steps — instantly, from local inference. If you've opted into cloud assistance, only sanitized metadata is sent upstream for a richer explanation.
-5. **You stay in flow** — Copy a suggestion, mark it helpful, or dismiss it, and keep coding.
+1. **Capture**: You run your program through `dmrun` (e.g. `python client/dmrun.py python app.py`). It captures stderr and extracts the error type and message.
+2. **Sanitize**: A local privacy engine redacts file paths, emails, tokens, env values, URL credentials and memory addresses. A second check (`assess_risk`) blocks anything still suspicious from being sent anywhere (fail closed).
+3. **Deduplicate**: The sanitized error is fingerprinted, and repeats within 60 seconds are suppressed.
+4. **Classify**: A local FastAPI service runs a calibrated ML classifier. If its confidence is at or above the threshold (0.6 in `settings.json`), the ML category is used. Otherwise it falls back to a deterministic rules mapping.
+5. **Explain**: A floating, always-on-top widget shows a plain-English explanation, labelled with its confidence or "pattern-matched" if the rules path was used.
 
 ## MVP Demo
 
@@ -107,16 +107,27 @@ Privacy isn't a feature bolted on afterward — it's the core design constraint.
 | Sanitized Cloud | No | Sends only approved, re-sanitized metadata for a richer explanation |
 | Advanced Cloud | No | User-approved redacted snippets, configurable provider — still never raw screenshots |
 
+Currently only Local Only mode is implemented; the cloud and local-LLM modes below are planned.
+
 ## ML Engine
 
-This is a genuine machine learning subsystem, not an LLM API wrapper:
+A text-classification pipeline trained on 132 labelled, sanitized error messages across 12 categories.
 
-- **Error category classifier** — TF-IDF features with Logistic Regression / Linear SVM comparison across 12 Python error classes (`syntax_error`, `type_error`, `key_error`, `module_not_found`, etc.), selected by **macro F1** to avoid common classes dominating the score.
-- **Log state classifier** — separates `error` / `warning` / `normal_log` / `unknown` to cut down false popups.
-- **Similarity retrieval** — cosine similarity over TF-IDF vectors to reuse cached explanations for errors seen before, cutting latency and cloud calls.
-- **Confidence thresholding** — low-confidence predictions route to a safer fallback instead of guessing.
+- **Features**: TF-IDF (1-2 grams) over `"{error_type} {message}"`. Including the exception type fixed `key_error` and `other_error`, which scored 0.00 on message text alone.
+- **Model**: Linear SVM wrapped in `CalibratedClassifierCV` so it produces usable probabilities. Chosen over Logistic Regression and Multinomial Naive Bayes after comparison.
+- **Evaluation**: 3-fold stratified cross-validation, since a held-out 10% test set covered only 7 of 12 categories.
 
-Evaluation artifacts (confusion matrix, per-class F1, model card) live in `ml_engine/` once training begins.
+| Model | Macro F1 (3-fold CV) |
+|---|---|
+| Logistic Regression | 0.801 |
+| Linear SVM | 0.957 |
+| Linear SVM (calibrated, **used**) | 0.931 |
+| Multinomial Naive Bayes | 0.661 |
+
+- **Known weakness**: `none_type_error` is confused with `attribute_error` and `type_error`, because NoneType errors reuse the same message templates. Low-confidence cases route to the rules fallback.
+- **Reproducible**: `python ml_engine/train.py` rebuilds the saved model from `dataset.csv`. The notebook `ml_engine/notebooks/training_and_evaluation.ipynb` is the authoritative record; the `_scratch` notebooks are archived history.
+
+Planned, not built yet: log-state classifier, similarity retrieval.
 
 ## Tech Stack
 
@@ -137,29 +148,36 @@ Evaluation artifacts (confusion matrix, per-class F1, model card) live in `ml_en
 
 ## Project Status
 
-**In active development.** Currently in Privacy Layer Phase.
+**In active development.** Phases 0 to 3 are complete; local LLM and polish is in progress.
 
-- [x] Phase 0 — Foundation (environment, Git, 12 broken scripts, error anatomy)
-- [x] Phase 1 — Local MVP (dmrun, local FastAPI service, floating widget)
-- [x] Phase 2 — Privacy Layer
-  - [x] Sanitizer: paths, emails, tokens, env vars, URL credentials (20 tests)
-  - [x] Risk scorer (assess_risk) with fail-closed behavior
-  - [x] Sanitizer wired into dmrun.py before fingerprinting
-  - [x] Settings system (local_service/settings.py) with privacy mode defaults
-  - [x] docs/privacy_model.md documenting the full data flow
-- [ ] Phase 3 — ML Engine
-- [ ] Phase 4 — UX polish + optional OCR
-- [ ] Phase 5 — Cloud assist & productization *(stretch)*
+- [x] Phase 0: Foundation
+- [x] Phase 1: Local MVP (`dmrun`, FastAPI service, floating widget)
+- [x] Phase 2: Privacy layer (sanitizer, risk scorer, settings), 27 passing tests (pytest).
+- [x] Phase 3: ML engine (dataset, model comparison, calibrated classifier wired into `/analyze`)
+- [x] Widget polish: threaded polling, collapse, light/dark theme, Escape to hide, tray icon
+- [ ] Local LLM mode (Ollama),
+- [ ] Final stress test, docs, demo video, v1.0
+- [ ] Optional: feedback loop, knowledge graph, OCR, VS Code extension
 
-## How to get started
+## Getting Started
 
-```bash
-git clone https://github.com/ATripathi14/DevMentor-AI.git
-cd DevMentor-AI
-conda create -n devmentor python=3.11
-conda activate devmentor
-pip install -e .
-```
+    git clone https://github.com/ATripathi14/DevMentor-AI.git
+    cd DevMentor-AI
+    conda create -n devmentor python=3.11
+    conda activate devmentor
+    pip install -e ".[dev]"
+
+Train the model (writes `classifier.joblib` and `vectorizer.joblib`):
+
+    python ml_engine/train.py
+
+Run it, in three terminals:
+
+    uvicorn local_service.main:app --reload --port 8765
+    python client/widget.py
+    python client/dmrun.py python ml_engine/data/raw/Key_Error.py
+
+The widget updates within about 2 seconds. If the service isn't running, `dmrun` still prints the raw error with instructions.
 
 **Try it out:**
 
@@ -212,4 +230,4 @@ DevMentor-AI/
 
 ---
 
-*A work in progress, built one phase at a time — see [Project Status](#project-status) for what's actually working right now.*
+*A work in progress — see [Project Status](#project-status) for what's actually working right now.*

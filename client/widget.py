@@ -1,11 +1,5 @@
 import sys
-import threading
 import requests
-
-try:
-    import keyboard   # pip install keyboard  — provides OS-level global hotkeys
-except ImportError:
-    keyboard = None   # widget still works without it; hotkey is just disabled
 
 from PySide6.QtWidgets import (
     QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLayout,
@@ -14,8 +8,10 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QTimer, QThread, Signal, QPoint
 from PySide6.QtGui import QShortcut, QKeySequence
 
+import threading
 
-#  Background poller — plain QThread run() loop, no QTimer on the worker.     
+
+#  Background poller: plain QThread run() loop, no QTimer on the worker.
 class LatestPoller(QThread):
     new_result = Signal(dict)
     error = Signal(str)
@@ -48,7 +44,7 @@ class LatestPoller(QThread):
             self.error.emit("timeout")
             return
         except requests.exceptions.ConnectionError:
-            # Server not running — expected during dev, stay silent.
+            # Server not running: expected during dev, stay silent.
             return
         except Exception as exc:  # noqa: BLE001
             self.error.emit(str(exc))
@@ -60,11 +56,14 @@ class LatestPoller(QThread):
             self.new_result.emit(data)
 
 
-#  The widget                                                               
+#  The widget
 class DevMentorWidget(QWidget):
-    """Floating, always-on-top error-explanation widget with theme + collapse."""
+    """Floating, always-on-top error-explanation widget with theme + collapse.
 
-    # Theme
+    Privacy note: keyboard input is only handled while this widget has focus
+    (Escape). No global hotkeys or system-wide keyboard hooks are used.
+    """
+
     DARK_QSS = """
         QWidget { background-color: #1f2933; }
         QLabel  { color: #eceff1; background-color: transparent; }
@@ -89,16 +88,6 @@ class DevMentorWidget(QWidget):
         QPushButton:pressed { background-color: #c0c0c0; }
     """
 
-    # --- Global hotkey to re-show the widget ------------------------------ #
-    # Two forms: display string (tooltips / toasts) and the string syntax
-    # expected by the `keyboard` library (lowercase, '+'-separated).
-    SHOW_SHORTCUT_DISPLAY  = "Alt+D" if sys.platform == "darwin" else "Ctrl+Alt+D"
-    SHOW_SHORTCUT_KEYBOARD = "alt+d" if sys.platform == "darwin" else "ctrl+alt+d"
-
-    # Emitted from the hotkey's listener thread; delivered to the GUI thread
-    # via Qt.QueuedConnection so widgets are only touched on the GUI thread.
-    hotkey_pressed = Signal()
-
     def __init__(self):
         super().__init__()
         self.setWindowTitle("DevMentor AI")
@@ -117,19 +106,13 @@ class DevMentorWidget(QWidget):
         self._has_shown_tray_hint = False   # toast fires once per session
         self._drag_offset: QPoint | None = None
 
-        # Build UI (order matters: tray before shortcuts) 
         self._build_ui()
         self._apply_theme()
         self._setup_tray_icon()
 
-        # Escape: window-local. Fires only when this widget has focus — correct
-        # behaviour so we never steal Escape from a terminal / editor.
+        # Escape: window-local. Fires only when this widget has focus, so we
+        # never see keystrokes meant for a terminal or editor.
         QShortcut(QKeySequence(Qt.Key_Escape), self, activated=self._hide_with_hint)
-
-        # Global hotkey to re-show the widget. Connected with QueuedConnection
-        # so the slot runs on the GUI thread, not the keyboard listener thread.
-        self.hotkey_pressed.connect(self._show_and_focus, Qt.QueuedConnection)
-        self._register_global_hotkey()
 
         # Poller
         self._poller = LatestPoller(
@@ -144,7 +127,6 @@ class DevMentorWidget(QWidget):
         root.setContentsMargins(12, 10, 12, 10)
         root.setSpacing(8)
 
-        # Header row: title + collapse chevron + theme toggle.
         header_row = QHBoxLayout()
         header_row.setSpacing(4)
 
@@ -153,13 +135,13 @@ class DevMentorWidget(QWidget):
         header_row.addWidget(self.header)
         header_row.addStretch(1)
 
-        self.collapse_button = QPushButton("\u25be")  
+        self.collapse_button = QPushButton("\u25be")
         self.collapse_button.setFixedWidth(26)
         self.collapse_button.setToolTip("Collapse")
         self.collapse_button.clicked.connect(self._toggle_collapse)
         header_row.addWidget(self.collapse_button)
 
-        self.theme_button = QPushButton("\u263d")     # theme icon
+        self.theme_button = QPushButton("\u263d")
         self.theme_button.setFixedWidth(26)
         self.theme_button.setToolTip("Toggle light / dark")
         self.theme_button.clicked.connect(self._toggle_theme)
@@ -167,14 +149,12 @@ class DevMentorWidget(QWidget):
 
         root.addLayout(header_row)
 
-        # Explanation label — hidden when collapsed.
         self.label = QLabel("Watching for errors...")
         self.label.setWordWrap(True)
         self.label.setAlignment(Qt.AlignTop | Qt.AlignLeft)
         self.label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         root.addWidget(self.label, 1)
 
-        # Buttons wrapped in a container so we can hide the whole row at once.
         self.body_container = QWidget()
         button_row = QHBoxLayout(self.body_container)
         button_row.setContentsMargins(0, 0, 0, 0)
@@ -193,7 +173,7 @@ class DevMentorWidget(QWidget):
     def _setup_tray_icon(self):
         icon = self.style().standardIcon(QStyle.SP_MessageBoxInformation)
         self.tray_icon = QSystemTrayIcon(icon, self)
-        self.tray_icon.setToolTip(f"DevMentor AI — {self.SHOW_SHORTCUT_DISPLAY} to show")
+        self.tray_icon.setToolTip("DevMentor AI: click to show or hide")
 
         menu = QMenu()
         show_action = menu.addAction("Show Widget")
@@ -208,26 +188,10 @@ class DevMentorWidget(QWidget):
         self.tray_icon.activated.connect(self._on_tray_activated)
         self.tray_icon.show()
 
-    # hotkey
-    def _register_global_hotkey(self):
-        """Register the OS-level hotkey via the `keyboard` library, if available."""
-        if keyboard is None:
-            print(
-                "[DevMentor] `keyboard` not installed — global hotkey disabled. "
-                "Run: pip install keyboard",
-                file=sys.stderr,
-            )
-            return
-        try:
-            keyboard.add_hotkey(self.SHOW_SHORTCUT_KEYBOARD, self.hotkey_pressed.emit)
-        except Exception as exc:  # noqa: BLE001 — perms, missing /dev/input, etc.
-            print(f"[DevMentor] global hotkey unavailable: {exc}", file=sys.stderr)
-
     # theme
     def _apply_theme(self):
         self.setStyleSheet(self.DARK_QSS if self._dark_mode else self.LIGHT_QSS)
-        # Button shows what you'd get on click, not what you currently have.
-        self.theme_button.setText("\u263d" if self._dark_mode else "\u2600")  # ☽ / ☀
+        self.theme_button.setText("\u263d" if self._dark_mode else "\u2600")
 
     def _toggle_theme(self):
         self._dark_mode = not self._dark_mode
@@ -239,20 +203,20 @@ class DevMentorWidget(QWidget):
             self._expanded_size = self.size()
             self.label.setVisible(False)
             self.body_container.setVisible(False)
-            self.collapse_button.setText("\u25b8")  # ▸
+            self.collapse_button.setText("\u25b8")
             self.collapse_button.setToolTip("Expand")
             self.resize(self.width(), 44)
             self._collapsed = True
         else:
             self.label.setVisible(True)
             self.body_container.setVisible(True)
-            self.collapse_button.setText("\u25be")  # ▾
+            self.collapse_button.setText("\u25be")
             self.collapse_button.setToolTip("Collapse")
             if self._expanded_size is not None:
                 self.resize(self._expanded_size)
             self._collapsed = False
 
-    #  show / hide helpers
+    # show / hide helpers
     def _show_and_focus(self):
         """Bring the widget back, raising it above other windows."""
         self.show()
@@ -266,7 +230,7 @@ class DevMentorWidget(QWidget):
                 and QSystemTrayIcon.isSystemTrayAvailable()):
             self.tray_icon.showMessage(
                 "DevMentor AI is still running",
-                f"Click the tray icon or press {self.SHOW_SHORTCUT_DISPLAY} to bring it back.",
+                "Click the tray icon to bring it back.",
                 QSystemTrayIcon.Information,
                 3000,
             )
@@ -297,10 +261,8 @@ class DevMentorWidget(QWidget):
 
         if self.label.text() != text:
             self.label.setText(text)
-            # If collapsed, auto-expand so the user actually sees the new error.
             if self._collapsed:
                 self._toggle_collapse()
-            # If hidden, resurface the widget so the user never misses an error.
             if not self.isVisible():
                 self._show_and_focus()
 
@@ -311,19 +273,10 @@ class DevMentorWidget(QWidget):
 
     def _on_tray_activated(self, reason):
         if reason == QSystemTrayIcon.Trigger:
-            # Left-click: toggle visibility; always raise when showing.
             if self.isVisible():
                 self._hide_with_hint()
             else:
                 self._show_and_focus()
-
-    # keys
-    def keyPressEvent(self, event):
-        # Escape is also bound via QShortcut (window-local). This is a safety net.
-        if event.key() == Qt.Key_Escape:
-            self._hide_with_hint()
-        else:
-            super().keyPressEvent(event)
 
     # drag
     def mousePressEvent(self, event):
@@ -340,17 +293,8 @@ class DevMentorWidget(QWidget):
         self._drag_offset = None
         event.accept()
 
-    #  shutdown 
+    # shutdown
     def _full_shutdown(self):
-        # Unhook the global hotkey BEFORE the QObject dies, otherwise the
-        # `keyboard` listener thread may call hotkey_pressed.emit() on a
-        # QObject that's already been destroyed.
-        if keyboard is not None:
-            try:
-                keyboard.remove_all_hotkeys()
-            except Exception:
-                pass
-
         if self._poller is not None and self._poller.isRunning():
             self._poller.stop()
             self._poller.wait(2000)

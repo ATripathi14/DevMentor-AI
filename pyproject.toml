@@ -4,9 +4,29 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "devmentor-ai"
-version = "0.1.0"
+version = "0.5.0"
 description = "Privacy-first ML-powered debugging assistant"
 requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "requests",
+    "PySide6",
+    "scikit-learn",
+    "pandas",
+    "joblib",
+    "pydantic",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "httpx",
+    "jupyter",
+    "matplotlib",
+    "seaborn",
+]
 
 [tool.setuptools]
 packages = ["client", "local_service", "sanitizer", "ml_engine"]
