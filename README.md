@@ -204,12 +204,22 @@ twice — this is the debounce logic in action.
 
 ## Roadmap
 
-Planned work after the MVP:
+**v1.0 (current):** Python-only, 132-example generated dataset, calibrated
+Linear SVM classifier, local LLM mode via Ollama (in progress).
 
-- **Multi-language error support** — extend the classifier beyond Python to JavaScript and Java
-- **Feedback loop** — let users rate explanations and use that data for periodic retraining
-- **Local LLM mode (Ollama)** — richer explanations with no cloud dependency
-- **Explainability panel** — show which tokens drove a given classification
+**v2 (planned):** A real-world dataset and multi-language support.
+
+- **Real-world traceback dataset**: thousands of sanitized tracebacks
+  collected from public sources, with a hand-labeled holdout set for honest
+  evaluation
+- **Multi-language error support**: JavaScript and Java first, then others
+  (C++, Go), with language detection and per-language classifiers
+
+**Later enhancements:**
+
+- **Feedback loop**: let users rate explanations and use that data for
+  periodic retraining
+- **Explainability panel**: show which tokens drove a given classification
 
 Detailed architecture and privacy-model docs will be added to `docs/` as each phase lands.
 

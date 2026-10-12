@@ -1,4 +1,4 @@
-# DevMentor AI — Architecture (Current State)
+# DevMentor AI — Architecture (Current State, v0.5)
 
 This document describes the pipeline as it actually exists today — 
 not the full future vision (see README.md for the target architecture).
@@ -9,19 +9,19 @@ not the full future vision (see README.md for the target architecture).
 script runs
     |
     v
-dmrun.py    <- reads command from CLI args (sys.argv)
+dmrun.py                           <- reads command from CLI args (sys.argv)
     |
     v
-runner.py: get_output_error()   <- runs script via subprocess, captures stderr
+runner.py: get_output_error()      <- runs script via subprocess, captures stderr
     |
     v
-runner.py: parse_error()     <- extracts error_type + message from traceback
+runner.py: parse_error()           <- extracts error_type + message from traceback
     |
     v
-sanitizer.py: sanitize()     <- redacts paths, emails, tokens, env var
-    |                               values, and URL credentials from message
+sanitizer.py: sanitize()           <- redacts paths, emails, tokens, env values,
+    |                              URL credentials, memory addresses
     v
-sanitizer.py: assess_risk()     <- re-scans sanitized text for anything
+sanitizer.py: assess_risk()        <- re-scans sanitized text for anything
     |                               still suspicious
     |
     +--> "review" --> print raw error + review notice, stop here (fail closed)
@@ -29,11 +29,11 @@ sanitizer.py: assess_risk()     <- re-scans sanitized text for anything
     +--> "safe"
          |
          v
-    runner.py: fingerprint()     <- hashes (error_type, SANITIZED message)
-         |                              into a 12-char ID using hashlib
+    runner.py: fingerprint()       <- hashes (error_type, SANITIZED message)
+         |                          into a 12-char ID using hashlib
          v
-    runner.py: should_notify()      <- checks .debounce_state.json for
-         |                              recent duplicates
+runner.py: should_notify()         <- checks .debounce_state.json for
+         |                             recent duplicates
          |
          +--> False --> print "suppressed" message, stop here
          |
@@ -49,16 +49,24 @@ sanitizer.py: assess_risk()     <- re-scans sanitized text for anything
          local_service/main.py: analyze()
               |
               v
-         explainer.py: normalize_error_type()     <- maps raw exception name
-              |                                      to one of 12 category labels
+         classifier_service.py: predict()   <- calibrated Linear SVM on
+              |                                "{error_type} {message}",
+              |                                returns category + confidence
               v
-         explainer.py: EXPLANATIONS       <- looks up plain-English
-              |                              explanation for that category
+         confidence >= threshold (settings.json, 0.6)?
+              |
+              +--> yes --> use ML category        (source: "ml")
+              |
+              +--> no  --> explainer.py: normalize_error_type()
+              |            rules mapping          (source: "rules")
               v
-         stores result (incl. fingerprint) in latest_result (in-memory)
+         explainer.py: EXPLANATIONS   <- plain-English explanation for category
               |
               v
-         returns {explanation, category, source, fingerprint} to dmrun.py
+         stores result in latest_result (in-memory)
+              |
+              v
+         returns {explanation, category, source, confidence, fingerprint}
               |
               v
          dmrun.py prints: [category] explanation
@@ -66,14 +74,16 @@ sanitizer.py: assess_risk()     <- re-scans sanitized text for anything
               |    (meanwhile, independently, every 2 seconds:)
               |
               v
-         widget.py: QTimer polls GET /latest
+         widget.py: background QThread polls GET /latest
               |
               v
          compares fingerprint to last one shown
               |
               +--> unchanged --> do nothing
               |
-              +--> new --> update floating widget label with [category] explanation
+              +--> new --> widget shows "[category] · high/medium/low
+                           confidence (NN%)" or "· pattern-matched",
+                           then the explanation
 ```
 
 ## Components
@@ -93,17 +103,19 @@ Returns the stderr string if the script failed, or None if it succeeded.
 Extracts the error type and message from the final traceback line.
 
 **sanitizer.py — sanitize(text)**
-Chains all 5 sanitizers in sequence: URLs first, then emails, tokens, 
-env vars, and paths last. Order is deliberate — URLs must be sanitized 
-before paths, since the path pattern's collision-avoidance for `//` 
-only works correctly on text that hasn't already been partially altered.
+Chains 6 sanitizers in order: URLs, object memory addresses, emails,
+tokens, env vars, paths. Order is deliberate: URLs must run before paths,
+since the path pattern's `//` protection only works on unaltered text.
 
 **sanitizer.py — sanitize_paths / sanitize_emails / sanitize_tokens / 
-sanitize_env_vars / sanitize_urls**
+sanitize_env_vars / sanitize_urls / sanitize_object_addresses**
 Each redacts one category of sensitive data (file paths, email 
-addresses, long tokens/API keys, environment variable values, and 
-URL-embedded credentials respectively), replacing matches with a 
-labeled placeholder like [REDACTED_PATH].
+addresses, long tokens/API keys, environment variable values, 
+URL-embedded credentials, and object memory addresses), replacing 
+matches with a labeled placeholder like [REDACTED_PATH].
+sanitize_object_addresses redacts Python object addresses 
+(e.g. 0x1bda620db90) as [REDACTED_ADDRESS]. They change on every run, 
+which made the dataset non-reproducible.
 
 **sanitizer.py — assess_risk(sanitized_text)**
 A second, stricter safety check run after sanitization. Scans for any 
@@ -123,40 +135,56 @@ seconds, independently per fingerprint. Persisted to
 client/.debounce_state.json, since dmrun.py exits after every invocation.
 
 **local_service/settings.py — load_settings() / save_settings()**
-Reads/writes local_service/settings.json. Defaults to 
-{privacy_mode: "local_only", confidence_threshold: 0.6}. Auto-creates 
-the file with defaults on first use. Not yet wired into the analyze 
-pipeline — currently just a standalone settings store, in preparation 
-for future privacy-mode switching.
+Reads/writes settings.json (defaults: privacy_mode "local_only",
+confidence_threshold 0.6). `confidence_threshold` is used by /analyze for
+ML-versus-rules routing. `privacy_mode` is stored but has no effect yet.
 
-**local_service/main.py — GET / / POST /analyze / GET /latest**
-Health check, error categorization + explanation lookup (receiving the 
-already-sanitized message), and most-recent-result polling endpoint, 
-respectively.
+**local_service/main.py — GET / , POST /analyze , GET /latest**
+/analyze runs the ML classifier first and falls back to the rules mapping
+below the confidence threshold. The response includes category, source
+("ml" or "rules"), confidence and fingerprint. /latest returns the most
+recent result.
+
+**local_service/classifier_service.py — predict(error_type, message)**
+Loads classifier.joblib and vectorizer.joblib once at import. Builds
+"{error_type} {message}", vectorizes it, and returns the top category with
+its calibrated probability.
 
 **local_service/explainer.py — normalize_error_type / EXPLANATIONS**
 Maps raw exception names to 12 category labels, and looks up a 
 plain-English explanation for each category.
 
+**ml_engine/train.py and dataset.csv**
+train.py rebuilds the saved model from the 132-row labelled dataset: TF-IDF
+(1-2 grams) plus Linear SVM wrapped in CalibratedClassifierCV (cv=2).
+The notebook ml_engine/notebooks/training_and_evaluation.ipynb is the
+authoritative record. Macro F1 is 0.931 under 3-fold CV.
+
 **client/widget.py — DevMentorWidget**
-A PySide6 always-on-top floating window. Polls GET /latest every 2 
-seconds, updates only when the fingerprint changes. Includes Dismiss, 
-Copy (with "Copied!" confirmation), and a system tray icon with 
-show/hide toggle and Exit.
+PySide6 always-on-top floating window. A background QThread polls /latest
+every 2 seconds, so network calls never block the UI. Shows a header with
+the category and confidence band or "pattern-matched", then the
+explanation. Features: Copy ("Copied!" feedback), Dismiss, collapse/expand,
+light/dark theme, drag to move, Escape to hide, tray icon (click to toggle,
+menu with Show/Hide/Exit), and auto-resurface when a new error arrives.
+No global keyboard hooks; keys are handled only while the widget has focus.
 
 ## Known Gaps and Limitations
 
-- none_type_error is currently unreachable: NoneType errors surface as 
-  TypeError or AttributeError with "NoneType" in the message text, not 
-  as their own exception class. To be fixed during dataset work.
+- NoneType errors share message templates with attribute_error and
+  type_error. The ML model handles most cases, but none_type_error remains
+  the weakest category (about 0.50 F1 on the single split). The rules path
+  cannot distinguish them at all, since it sees only the exception name.
 - Unix paths containing spaces are only partially redacted. Accepted 
   as a low-risk limitation rather than adding regex complexity.
 - Windows paths using forward slashes leave the bare drive letter 
   visible. Minor, accepted limitation.
-- settings.py exists but isn't yet wired into main.py's actual 
-  request-handling logic — privacy_mode has no effect yet.
+- Evaluation is on 132 generated messages, not real-world tracebacks, so
+  real accuracy is likely lower. A real dataset is planned for v2.
+- settings.json's privacy_mode is stored but not yet acted on.
 
-## Not Yet Built
+## Yet to be Built
 
-- ML classifier — 
+- Local LLM mode (Ollama), in progress for v1.0
 - Cloud-assisted explanation modes (Sanitized Cloud / Advanced Cloud)
+- v2: real-world traceback dataset and multi-language support
