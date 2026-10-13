@@ -281,3 +281,21 @@ Verified two real cases:
 /latest and /analyze responses now include confidence and source. 
 Confirmed the widget handles the updated response shape correctly 
 with no changes needed.
+
+Week 6-7 — Model switch, reproducibility, widget rewrite
+
+1. Added error_type to the training text ("{error_type} {message}"). key_error and other_error went from F1 0.00 to near 1.00, because the message alone carried no consistent signal for them.
+
+2. Expanded the dataset from 102 to 132 rows by combinatorial generation (types x operations). Logistic Regression dropped to 0.801 macro F1 under 3-fold CV while Linear SVM reached 0.957, so the project switched to Linear SVM wrapped in CalibratedClassifierCV (0.931) to keep predict_proba for confidence routing.
+
+3. Found two reproducibility bugs: object memory addresses in network_error messages (fixed by sanitize_object_addresses) and live network calls whose outcome varied run to run (fixed by hardcoding those 5 examples). dataset.csv is now byte-identical across runs.
+
+4. Wired the classifier into /analyze: ML first, falling back to rules below confidence 0.6. Verified one ambiguous case (0.54, rules) and one unknown error (0.55, rules).
+
+5. Rewrote the widget: background QThread poller (no UI blocking), collapse, light/dark theme, Escape to hide, confidence-band header.
+
+6. Removed the global hotkey (keyboard library). A system-wide keyboard hook contradicts the privacy-first claim, and the tray icon already brings the widget back.
+
+7. Decision: finish Ollama and v1.0 first; v2 will add a real traceback dataset and multi-language support.
+
+Honest caveat: the 0.931 figure is on 132 generated messages, not real tracebacks.

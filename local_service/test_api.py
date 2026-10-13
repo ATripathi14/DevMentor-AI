@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 from local_service.main import app
+from local_service import main
 
 client = TestClient(app)
 
@@ -52,3 +53,23 @@ def test_analyze_rejects_malformed_request():
     })
 
     assert response.status_code == 422
+
+
+def test_high_confidence_uses_ml(monkeypatch):
+    monkeypatch.setattr(main, "ml_predict",
+                        lambda t, m: {"category": "key_error", "confidence": 0.9})
+    r = client.post("/analyze", json={
+        "error_type": "KeyError", "message": "'x'", "fingerprint": "r1"})
+    data = r.json()
+    assert data["source"] == "ml"
+    assert data["category"] == "key_error"
+
+
+def test_low_confidence_falls_back_to_rules(monkeypatch):
+    monkeypatch.setattr(main, "ml_predict",
+                        lambda t, m: {"category": "other_error", "confidence": 0.2})
+    r = client.post("/analyze", json={
+        "error_type": "KeyError", "message": "'x'", "fingerprint": "r2"})
+    data = r.json()
+    assert data["source"] == "rules"
+    assert data["category"] == "key_error"

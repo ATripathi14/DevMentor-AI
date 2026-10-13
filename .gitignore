@@ -226,7 +226,7 @@ __marimo__/
 readonly.txt
 .vscode/
 
-
+.coverage
 test/scratch/
 
 client/.debounce_state.json
