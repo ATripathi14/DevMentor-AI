@@ -73,3 +73,25 @@ def test_low_confidence_falls_back_to_rules(monkeypatch):
     data = r.json()
     assert data["source"] == "rules"
     assert data["category"] == "key_error"
+
+
+def test_llm_skipped_for_confident_specific_category(monkeypatch):
+    calls = []
+    monkeypatch.setattr(main, "explain_with_llm", lambda *a, **k: calls.append(1) or "x")
+    monkeypatch.setattr(main, "ml_predict",
+                        lambda t, m: {"category": "key_error", "confidence": 0.9})
+    monkeypatch.setattr(main, "load_settings",
+                        lambda: {"privacy_mode": "local_llm", "confidence_threshold": 0.6})
+    client.post("/analyze", json={"error_type": "KeyError", "message": "'x'", "fingerprint": "l1"})
+    assert calls == []
+
+
+def test_llm_used_for_other_error(monkeypatch):
+    calls = []
+    monkeypatch.setattr(main, "explain_with_llm", lambda *a, **k: calls.append(1) or "x")
+    monkeypatch.setattr(main, "ml_predict",
+                        lambda t, m: {"category": "other_error", "confidence": 0.9})
+    monkeypatch.setattr(main, "load_settings",
+                        lambda: {"privacy_mode": "local_llm", "confidence_threshold": 0.6})
+    client.post("/analyze", json={"error_type": "RuntimeError", "message": "boom", "fingerprint": "l2"})
+    assert calls == [1]

@@ -50,10 +50,14 @@ class LatestPoller(QThread):
             self.error.emit(str(exc))
             return
 
+        
         fp = data.get("fingerprint")
-        if fp and fp != self._last_fingerprint:
-            self._last_fingerprint = fp
+        key = f"{fp}|{'llm' if data.get('llm_explanation') else 'base'}"
+
+        if fp and key != self._last_fingerprint:
+            self._last_fingerprint = key
             self.new_result.emit(data)
+
 
 
 #  The widget
@@ -256,6 +260,11 @@ class DevMentorWidget(QWidget):
             header = f"[{category}] \u00b7 pattern-matched"
         else:
             header = "DevMentor AI"
+
+        llm = data.get("llm_explanation")
+        if llm:
+            header = f"[{category}] \u00b7 AI-explained (local model)"
+            explanation = f"{llm}\n\n(AI-generated, verify before applying)"
 
         text = f"{header}\n\n{explanation}" if explanation else header
 
