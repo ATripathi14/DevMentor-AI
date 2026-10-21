@@ -51,7 +51,7 @@ The goal is to automate the low-value part of debugging (figuring out what an er
 | **Trigger** | Reactive — you ask it | Proactive — it notices and tells you |
 | **Scope** | Trapped inside one IDE | Works with any terminal via a command wrapper |
 | **Data handling** | Sends context to the cloud by default | Local-first; nothing leaves the device unless you opt in |
-| **Cost/latency model** | Every query round-trips to an LLM | Local rule engine + ML classifier handle most errors instantly; cloud is a last resort |
+| **Cost/latency model** | Every query round-trips to an LLM | Local rule engine + ML classifier handle most errors instantly; a local LLM is optional |
 
 The key feature is zero-click detection: the widget can respond before you've reached for the mouse.
 
@@ -61,7 +61,9 @@ The key feature is zero-click detection: the widget can respond before you've re
 2. **Sanitize**: A local privacy engine redacts file paths, emails, tokens, env values, URL credentials and memory addresses. A second check (`assess_risk`) blocks anything still suspicious from being sent anywhere (fail closed).
 3. **Deduplicate**: The sanitized error is fingerprinted, and repeats within 60 seconds are suppressed.
 4. **Classify**: A local FastAPI service runs a calibrated ML classifier. If its confidence is at or above the threshold (0.6 in `settings.json`), the ML category is used. Otherwise it falls back to a deterministic rules mapping.
-5. **Explain**: A floating, always-on-top widget shows a plain-English explanation, labelled with its confidence or "pattern-matched" if the rules path was used.
+5. **Explain**: A floating, always-on-top widget shows a plain-English explanation, labelled with its confidence or "pattern-matched" if the rules path was used. In `local_llm` mode, hard or low-confidence errors are upgraded with a local AI explanation, labelled as AI-generated.
+
+**Scope:** DevMentor captures errors from scripts launched through `dmrun`. It does not watch an arbitrary terminal or the interactive Python prompt.
 
 ## MVP Demo
 
@@ -87,31 +89,32 @@ Hosted API → queue/cache → LLM provider → validated response
      WebSocket/poll update to widget
 ```
 
-- **Desktop client** — `dmrun` wrapper, optional OCR control, floating widget, settings/consent UI
-- **Local intelligence** — sanitization, parsing, ML inference, rule engine, local cache
+- **Desktop client** — `dmrun` wrapper, floating widget
+- **Local intelligence** — sanitization, parsing, ML inference, rule engine, optional local LLM
 - **Local service** — FastAPI on localhost connecting the client and the intelligence layer
 - **Hosted backend (later phase)** — auth, sync, quotas, audit, LLM routing — entirely optional
 
 ## Privacy Model
 
-Privacy isn't a feature bolted on afterward — it's the core design constraint.
+Privacy isn't a feature bolted on afterward — it's the core design constraint. Full details are in [docs/privacy_model.md](docs/privacy_model.md).
 
-- **Local-first by default.** Local-Only mode makes zero cloud requests.
+- **Local-first by default.** Local Only mode makes zero cloud requests.
 - **Fail closed.** If the sanitizer isn't confident content is safe, it blocks transmission and asks you to review it — it never guesses in favor of sending.
-- **Least data necessary.** Only error type, language, sanitized message, and an abstract stack summary are eligible to leave the device — never whole files, raw screenshots, or raw OCR output.
-- **Re-sanitized server-side.** The client is never trusted alone; anything that reaches a hosted backend is checked again.
+- **Least data necessary.** Only error type, sanitized message, and category are ever used — never whole files, raw screenshots, or raw OCR output.
+- **No global keyboard hooks.** The widget only handles Escape while it has focus.
 
 | Mode | Default | Behavior |
 |---|---|---|
-| Local Only | Yes | No hosted API/LLM calls — rules + local ML + local history only |
-| Sanitized Cloud | No | Sends only approved, re-sanitized metadata for a richer explanation |
-| Advanced Cloud | No | User-approved redacted snippets, configurable provider — still never raw screenshots |
+| Local Only | Yes | No LLM calls — rules + local ML + local history only |
+| Local LLM | No | Sanitized message sent to a local Ollama process on localhost, only for hard or low-confidence errors |
+| Sanitized Cloud | No | Planned: sends only approved, re-sanitized metadata for a richer explanation |
+| Advanced Cloud | No | Planned: user-approved redacted snippets, configurable provider |
 
-Currently only Local Only mode is implemented; the cloud and local-LLM modes below are planned.
+Local Only (default) and optional Local LLM are implemented; the cloud modes are planned.
 
 ## ML Engine
 
-A text-classification pipeline trained on 132 labelled, sanitized error messages across 12 categories.
+A text-classification pipeline trained on 132 labelled, sanitized error messages across 12 categories, generated by running small failing code snippets (not real-world tracebacks).
 
 - **Features**: TF-IDF (1-2 grams) over `"{error_type} {message}"`. Including the exception type fixed `key_error` and `other_error`, which scored 0.00 on message text alone.
 - **Model**: Linear SVM wrapped in `CalibratedClassifierCV` so it produces usable probabilities. Chosen over Logistic Regression and Multinomial Naive Bayes after comparison.
@@ -125,116 +128,108 @@ A text-classification pipeline trained on 132 labelled, sanitized error messages
 | Multinomial Naive Bayes | 0.661 |
 
 - **Known weakness**: `none_type_error` is confused with `attribute_error` and `type_error`, because NoneType errors reuse the same message templates. Low-confidence cases route to the rules fallback.
+- **Honest caveat**: these scores are on generated messages. Real-world accuracy is likely lower; a real dataset is planned for v2.
 - **Reproducible**: `python ml_engine/train.py` rebuilds the saved model from `dataset.csv`. The notebook `ml_engine/notebooks/training_and_evaluation.ipynb` is the authoritative record; the `_scratch` notebooks are archived history.
-
-Planned, not built yet: log-state classifier, similarity retrieval.
 
 ## Tech Stack
 
-*Target stack for the full project — not everything below is wired up yet (see [Project Status](#project-status)).*
-
 | Layer | Technology |
 |---|---|
-| Language | Python |
-| Local/hosted API | FastAPI + Uvicorn |
+| Language | Python 3.11 |
+| Local API | FastAPI + Uvicorn |
 | Desktop UI | PySide6 |
-| ML | scikit-learn (TF-IDF, Logistic Regression, LinearSVC), pandas, joblib |
+| ML | scikit-learn (TF-IDF, LinearSVC + CalibratedClassifierCV), pandas, joblib |
 | Sanitization | `re` / regex-based pattern matching |
-| Local storage | SQLite |
-| Optional OCR | Tesseract + pytesseract, mss |
-| Hosted backend (later) | PostgreSQL, Redis, Docker Compose |
-| Packaging | PyInstaller |
-| Testing | pytest |
+| Optional local LLM | Ollama (`llama3.2:3b`) |
+| Testing | pytest (31 tests) |
+
+*Planned, not used yet: SQLite, OCR (Tesseract), PostgreSQL, Redis, Docker, PyInstaller.*
 
 ## Project Status
 
-**In active development.** Phases 0 to 3 are complete; local LLM and polish is in progress.
+**In active development.** Phases 0 to 3 and the local LLM mode are complete; the final wrap-up is in progress.
 
 - [x] Phase 0: Foundation
 - [x] Phase 1: Local MVP (`dmrun`, FastAPI service, floating widget)
-- [x] Phase 2: Privacy layer (sanitizer, risk scorer, settings), 27 passing tests (pytest).
+- [x] Phase 2: Privacy layer (sanitizer, risk scorer, settings)
 - [x] Phase 3: ML engine (dataset, model comparison, calibrated classifier wired into `/analyze`)
 - [x] Widget polish: threaded polling, collapse, light/dark theme, Escape to hide, tray icon
-- [ ] Local LLM mode (Ollama),
-- [ ] Final stress test, docs, demo video, v1.0
+- [x] Local LLM mode (Ollama)
+- [x] 31 passing tests (pytest)
+- [ ] Final stress test, model card, demo video, v1.0
 - [ ] Optional: feedback loop, knowledge graph, OCR, VS Code extension
 
 ## Getting Started
 
-    git clone https://github.com/ATripathi14/DevMentor-AI.git
-    cd DevMentor-AI
-    conda create -n devmentor python=3.11
-    conda activate devmentor
-    pip install -e ".[dev]"
+```bash
+git clone https://github.com/ATripathi14/DevMentor-AI.git
+cd DevMentor-AI
+conda create -n devmentor python=3.11
+conda activate devmentor
+pip install -e ".[dev]"
+```
 
 Train the model (writes `classifier.joblib` and `vectorizer.joblib`):
 
-    python ml_engine/train.py
-
-Run it, in three terminals:
-
-    uvicorn local_service.main:app --reload --port 8765
-    python client/widget.py
-    python client/dmrun.py python ml_engine/data/raw/Key_Error.py
-
-The widget updates within about 2 seconds. If the service isn't running, `dmrun` still prints the raw error with instructions.
-
-**Try it out:**
-
-Start the local service (leave this running in its own terminal):
-
 ```bash
-uvicorn local_service.main:app --reload --port 8765
+python ml_engine/train.py
 ```
 
-In a separate terminal, run a broken script through `dmrun`:
+Run it in three terminals:
 
 ```bash
+# Terminal 1: the local service (leave running)
+uvicorn local_service.main:app --reload --port 8765
+
+# Terminal 2: the floating widget
+python client/widget.py
+
+# Terminal 3: run a broken script through dmrun
 python client/dmrun.py python ml_engine/data/raw/Key_Error.py
 ```
 
-This captures the error, classifies it into one of 12 categories, and 
-prints a plain-English explanation and suggested fix. If the local 
-service isn't running, `dmrun` still shows the raw error along with a 
-message telling you how to start it. Running the same broken script 
-again within 60 seconds is automatically suppressed rather than shown 
-twice — this is the debounce logic in action.
+This captures the error, classifies it into one of 12 categories, and prints a plain-English explanation and suggested fix in the terminal. The widget updates within about 2 seconds. If the local service isn't running, `dmrun` still shows the raw error along with a message telling you how to start it. Running the same broken script again within 60 seconds is suppressed rather than shown twice (debounce).
 
-> The floating widget now updates automatically as errors are detected — see the [MVP Demo](#mvp-demo) above.
+**Optional local LLM mode:** install Ollama, run `ollama pull llama3.2:3b`, then set `"privacy_mode": "local_llm"` in `local_service/settings.json`. It is used only for hard or low-confidence errors and takes roughly 10 seconds, after the instant explanation has already appeared.
+
+Run the tests:
+
+```bash
+pytest -v
+```
 
 ## Roadmap
 
-**v1.0 (current):** Python-only, 132-example generated dataset, calibrated
-Linear SVM classifier, local LLM mode via Ollama (in progress).
+**v1.0:** Python-only, 132-example generated dataset, calibrated Linear SVM classifier, optional local LLM mode via Ollama.
 
 **v2 (planned):** A real-world dataset and multi-language support.
 
-- **Real-world traceback dataset**: thousands of sanitized tracebacks
-  collected from public sources, with a hand-labeled holdout set for honest
-  evaluation
-- **Multi-language error support**: JavaScript and Java first, then others
-  (C++, Go), with language detection and per-language classifiers
+- **Real-world traceback dataset**: thousands of sanitized tracebacks collected from public sources, with a hand-labeled holdout set for honest evaluation
+- **Multi-language error support**: JavaScript and Java first, then others (C++, Go), with language detection and per-language classifiers
+- **Interpreter hook**: a `sys.excepthook` mode so errors in interactive sessions are captured too
 
 **Later enhancements:**
 
-- **Feedback loop**: let users rate explanations and use that data for
-  periodic retraining
+- **Feedback loop**: let users rate explanations and use that data for periodic retraining
 - **Explainability panel**: show which tokens drove a given classification
-
-Detailed architecture and privacy-model docs will be added to `docs/` as each phase lands.
 
 ## Project Structure
 
 ```
 DevMentor-AI/
-  client/              # dmrun, widget, OCR, consent UI
-  local_service/       # FastAPI localhost service, rules, sanitizer
+  client/            # dmrun.py, runner.py, widget.py
+  local_service/     # FastAPI service, classifier_service, explainer,
+                     # llm_adapter, settings, API tests
+  sanitizer/         # redaction functions, risk scorer, tests
   ml_engine/
-    data/ notebooks/ src/ models/ tests/
-  backend/             # hosted API, auth, queue workers (later)
-  docs/                # architecture, privacy model, model card
-  tests/               # end-to-end tests
-  .env.example
+    data/            # raw/ (source scripts), labeled/ (dataset.csv)
+    models/          # saved model, charts, model card
+    notebooks/       # training_and_evaluation.ipynb (+ archived scratch)
+    train.py
+  docs/              # architecture, privacy model, notes, demo
+  test/              # fixtures
+  pyproject.toml
+  LICENSE
   README.md
 ```
 

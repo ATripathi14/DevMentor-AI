@@ -299,3 +299,8 @@ Week 6-7 — Model switch, reproducibility, widget rewrite
 7. Decision: finish Ollama and v1.0 first; v2 will add a real traceback dataset and multi-language support.
 
 Honest caveat: the 0.931 figure is on 132 generated messages, not real tracebacks.
+
+Week 7 — Local LLM (Ollama)
+
+Measured llama3.2:3b on CPU at 8-11 s per answer, too slow for the default path. Design: pre-written explanation returned instantly; the LLM runs as a background task and only for other_error or confidence < 0.7, upgrading
+/latest when it finishes. The adapter returns None on any failure, so Ollama being off never breaks anything (verified live). Tests monkeypatch explain_with_llm. Known scope: errors are captured only via dmrun, not the interactive prompt.

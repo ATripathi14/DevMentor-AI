@@ -2,11 +2,15 @@
 
 This document describes exactly what data DevMentor AI collects, processes, and (if ever) transmits, and what it never touches at all.
 
-## Current State (Local-Only Mode)
+## Current State
 
-DevMentor AI currently operates entirely locally. No error data, sanitized or otherwise, is sent outside your own machine. All processing happens between processes on localhost: `dmrun.py`, the FastAPI service, and the floating widget. The ML classifier is a pre-trained model loaded from disk, so classification needs no network access either.
+DevMentor AI operates entirely locally. No error data, sanitized or otherwise, is sent outside your own machine. All processing happens between processes on localhost: `dmrun.py`, the FastAPI service, and the floating widget. In `local_llm` mode this also includes a local Ollama process. The ML classifier is a pre-trained model loaded from disk, so classification needs no network access either.
 
-The sanitizer exists to prepare for optional, future cloud-assisted modes, and as defence in depth now. `privacy_mode` in `settings.json` is stored but only `local_only` is implemented; the cloud modes and the Ollama local-LLM mode are planned.
+The sanitizer is defence in depth now and prepares for optional cloud modes. `privacy_mode` in `settings.json` supports `local_only` (default) and `local_llm` (optional, see below). The cloud modes are planned.
+
+## Local LLM Mode (optional)
+
+When `privacy_mode` is `local_llm`, the category and sanitized error message are sent to a local Ollama process on localhost (port 11434), only for `other_error` or low-confidence (below 0.7) cases. The message is re-sanitized server-side before sending. Nothing leaves the machine. The default, `local_only`, makes no LLM calls. AI-generated text is labelled in the widget and marked "verify before applying". If Ollama is down or slow, the pre-written explanation is used with no error.
 
 ## What Gets Sanitized, and Why
 
@@ -29,10 +33,11 @@ Nothing leaves the device by default. Cloud modes are opt-in and planned for the
 
 | Data | Can leave the device? | Notes |
 |---|---|---|
-| Sanitized error message | Opt-in cloud modes only | Only after redaction |
-| Error category (e.g. `key_error`) | Opt-in cloud modes only | |
+| Category + sanitized message to local Ollama | Stays on localhost | Only in `local_llm` mode, for `other_error` or confidence < 0.7 |
+| Sanitized error message | Opt-in cloud modes only (future) | Only after redaction |
+| Error category (e.g. `key_error`) | Opt-in cloud modes only (future) | |
 | Abstract stack summary | Opt-in cloud modes only (future) | Not implemented yet |
-| Fingerprint / hash | Opt-in cloud modes only | |
+| Fingerprint / hash | Opt-in cloud modes only (future) | |
 | Raw, unsanitized error text | **Never** | |
 | Full file contents or source code | **Never** | |
 | Raw screenshots or OCR output | **Never** | |
@@ -68,3 +73,4 @@ If `assess_risk()` returns `"review"`, the error is **not sent anywhere**. It is
 - Windows paths using forward slashes (C:/Users/...) leave the bare drive letter (e.g. "C:") visible. A drive letter alone isn't meaningfully sensitive.
 - `sanitize_tokens()` redacts any identifier of 20+ characters, so some harmless long names are redacted too. Over-redaction is accepted as safer than missing a secret.
 - Regex-based redaction cannot guarantee that every secret is caught. `assess_risk()` is a second net, not a proof.
+- LLM output is generated text and can be wrong. It is labelled as such in the widget.
