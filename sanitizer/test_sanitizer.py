@@ -130,6 +130,26 @@ def test_assess_risk_handles_already_redacted_text_as_safe():
     text = sanitize(r"Error in C:\Users\apurv\secret.py")
     assert assess_risk(text) == "safe"
 
+def test_assess_risk_passes_camelcase_exception_names():
+    """Ordinary Python exception class names must not be flagged as risky.
+
+    Regression guard: before the digit-required fix, runs like
+    NewConnectionError (18 chars) and HTTPConnectionPool (18 chars)
+    were treated as leftover secrets and silently dropped every
+    requests-based connection error from the ML pipeline.
+    """
+    text = (
+        "requests.exceptions.ConnectionError: "
+        "HTTPConnectionPool(host='localhost', port=8765): "
+        "NewConnectionError('Failed to establish a new connection')"
+    )
+    assert assess_risk(text) == "safe"
+
+
+def test_assess_risk_still_flags_secret_with_digits():
+    """A 16+ alphanumeric run containing digits is still treated as a possible secret."""
+    assert assess_risk("Unexpected token: abc123xyz789fakeid") == "review"
+
 # --- master sanitize() ---
 def test_sanitize_chains_all_functions_together():
     text = (

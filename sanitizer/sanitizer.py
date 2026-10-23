@@ -56,7 +56,7 @@ def assess_risk(sanitized_text: str) -> str:
     # Anything that still looks like it could be an unredacted secret:
     # a long run of mixed-case letters/digits that our token pattern
     # might have missed (e.g. right at a boundary, or a different format).
-    suspicious_pattern = r"[A-Za-z0-9]{16,}"
+    suspicious_pattern = r"(?=[A-Za-z0-9]*\d)[A-Za-z0-9]{16,}"
 
     if re.search(suspicious_pattern, sanitized_text):
         return "review"

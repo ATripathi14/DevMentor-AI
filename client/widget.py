@@ -3,7 +3,8 @@ import requests
 
 from PySide6.QtWidgets import (
     QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLayout,
-    QPushButton, QSystemTrayIcon, QMenu, QStyle, QSizePolicy
+    QPushButton, QSystemTrayIcon, QMenu, QStyle, QSizePolicy,
+    QScrollArea
 )
 from PySide6.QtCore import Qt, QTimer, QThread, Signal, QPoint
 from PySide6.QtGui import QShortcut, QKeySequence
@@ -78,6 +79,9 @@ class DevMentorWidget(QWidget):
         }
         QPushButton:hover   { background-color: #3e4c59; }
         QPushButton:pressed { background-color: #52606d; }
+        QScrollArea, QScrollArea > QWidget > QWidget {
+            background-color: transparent;
+        }
     """
 
     LIGHT_QSS = """
@@ -90,6 +94,9 @@ class DevMentorWidget(QWidget):
         }
         QPushButton:hover   { background-color: #d5d5d5; }
         QPushButton:pressed { background-color: #c0c0c0; }
+        QScrollArea, QScrollArea > QWidget > QWidget {
+            background-color: transparent;
+        }
     """
 
     def __init__(self):
@@ -157,7 +164,17 @@ class DevMentorWidget(QWidget):
         self.label.setWordWrap(True)
         self.label.setAlignment(Qt.AlignTop | Qt.AlignLeft)
         self.label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        root.addWidget(self.label, 1)
+        self.label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.label.setStyleSheet("background-color: transparent;")
+
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidget(self.label)
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setFrameShape(QScrollArea.NoFrame)
+        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.scroll_area.setStyleSheet("QScrollArea { background-color: transparent; }")
+        root.addWidget(self.scroll_area, 1)
 
         self.body_container = QWidget()
         button_row = QHBoxLayout(self.body_container)
@@ -270,6 +287,7 @@ class DevMentorWidget(QWidget):
 
         if self.label.text() != text:
             self.label.setText(text)
+            self.scroll_area.verticalScrollBar().setValue(0)
             if self._collapsed:
                 self._toggle_collapse()
             if not self.isVisible():
@@ -326,3 +344,5 @@ if __name__ == "__main__":
     window.show()
     window.activateWindow()   # give it focus so Escape works immediately
     sys.exit(app.exec())
+
+    
