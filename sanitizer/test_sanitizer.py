@@ -1,8 +1,25 @@
 from sanitizer.sanitizer import (
     sanitize_paths, sanitize_emails, sanitize_tokens,
-    sanitize_env_vars, sanitize_urls, sanitize, assess_risk, sanitize_object_addresses,
+    sanitize_env_vars, sanitize_urls, sanitize, assess_risk, sanitize_object_addresses, sanitize_ips
 )
+import pytest
 
+
+@pytest.mark.parametrize("raw, expected", [
+    ("timeout to 192.168.4.27:49154", "timeout to [REDACTED_IP]:49154"),
+    ("host='192.168.1.29', port=1400", "host='[REDACTED_IP]', port=1400"),
+    ("connecting to 127.0.0.1:16379", "connecting to 127.0.0.1:16379"),
+    ("package version 1.2.3.999", "package version 1.2.3.999"),
+])
+def test_sanitize_ips(raw, expected):
+    assert sanitize_ips(raw) == expected
+
+
+def test_sanitize_chain_redacts_private_ip():
+    result = sanitize("ConnectionError to 10.0.14.88:8080")
+    assert "10.0.14.88" not in result
+    assert "[REDACTED_IP]:8080" in result
+    
 # --- paths ---
 def test_windows_path_is_redacted():
     text = r"Error in C:\Users\apurv\secret.py at line 10"

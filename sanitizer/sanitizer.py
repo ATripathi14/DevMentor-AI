@@ -1,4 +1,21 @@
 import re
+import ipaddress
+import re
+
+_IPV4_RE = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")
+
+
+def sanitize_ips(text: str) -> str:
+    """Redact IPv4 addresses, keeping loopback (127.0.0.1) for debugging."""
+    def _replace(match):
+        candidate = match.group(0)
+        try:
+            ip = ipaddress.IPv4Address(candidate)
+        except ValueError:
+            return candidate          # e.g. version string 1.2.3.999
+        return candidate if str(ip) == "127.0.0.1" else "[REDACTED_IP]"
+
+    return _IPV4_RE.sub(_replace, text)
 
 def sanitize_paths(text: str) -> str:
     """Redact file paths (Windows and Unix) so usernames/folders don't leak."""
@@ -42,6 +59,7 @@ def sanitize(text: str) -> str:
     """Run all sanitizers in order. URLs first, paths last — order avoids one regex eating another's target."""
     text = sanitize_urls(text)
     text = sanitize_object_addresses(text)
+    text = sanitize_ips(text) 
     text = sanitize_emails(text)
     text = sanitize_tokens(text)
     text = sanitize_env_vars(text)
@@ -53,9 +71,9 @@ def assess_risk(sanitized_text: str) -> str:
     """Scans already-sanitized text for anything still suspicious.
     Returns 'safe' if nothing concerning remains, 'review' otherwise.
     """
-    # Anything that still looks like it could be an unredacted secret:
-    # a long run of mixed-case letters/digits that our token pattern
-    # might have missed (e.g. right at a boundary, or a different format).
+    # Flag 16+ character alphanumeric runs that contain at least one digit.
+    # Real secrets almost always mix digits in, while ordinary CamelCase
+    # exception names (NewConnectionError, HTTPConnectionPool) do not.
     suspicious_pattern = r"(?=[A-Za-z0-9]*\d)[A-Za-z0-9]{16,}"
 
     if re.search(suspicious_pattern, sanitized_text):

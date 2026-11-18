@@ -304,3 +304,12 @@ Week 7 — Local LLM (Ollama)
 
 Measured llama3.2:3b on CPU at 8-11 s per answer, too slow for the default path. Design: pre-written explanation returned instantly; the LLM runs as a background task and only for other_error or confidence < 0.7, upgrading
 /latest when it finishes. The adapter returns None on any failure, so Ollama being off never breaks anything (verified live). Tests monkeypatch explain_with_llm. Known scope: errors are captured only via dmrun, not the interactive prompt.
+
+assess_risk false positive
+
+Real requests connection errors were blocked by the risk gate: CamelCase names like NewConnectionError and HTTPConnectionPool are 16+ characters, so they looked like secrets. The widget silently kept the previous explanation. The earlier dataset hid this because the network_error rows were hardcoded and never ran through assess_risk. Fix: only flag runs that contain a digit. Tests cover both directions. Trade-off: a 16-19 letter secret with no digits is no longer flagged (sanitize_tokens still covers 20+).
+
+
+A middle close-out.
+
+Built a real-world eval set: collected GitHub issue tracebacks, sanitized, drafted labels from exception-name rules (no model), reviewed by hand, 245 rows. First honest numbers: 0.863 macro F1 end-to-end, 0.776 ML-only, versus 0.931 on generated data. check_eval.py found 8 rows overlapping training; evaluate_real.py now drops them automatically. Found a sanitizer gap (private IPs) and added sanitize_ips. The 12-category taxonomy cannot cover the long tail; plan is a tiered, language-agnostic design (see roadmap). The eval set is now a dev set, not a test set.

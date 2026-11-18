@@ -233,4 +233,24 @@ client/.debounce_state.json
 
 local_service/settings.json
 
-ml_engine\data\labeled\dataset_backup.csv
+
+ml_engine/data/eval/raw_tracebacks.txt
+
+
+ml_engine/data/eval/raw_tracebacks.jsonl
+
+ml_engine/data/eval/processed_issues.txt
+
+ml_engine/data/eval/eval_to_label.csv
+
+ml_engine/data/eval/*.tmp
+
+ml_engine/data/eval/eval_to_label_clean.csv
+
+ml_engine/data/eval/eval_review.csv
+
+ml_engine/data/eval/eval_review_draft.csv
+
+ml_engine/data/eval/eval_labeled_backup.csv
+
+ml_engine/data/eval/eval_labeled.csv

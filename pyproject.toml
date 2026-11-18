@@ -16,6 +16,7 @@ dependencies = [
     "pandas",
     "joblib",
     "pydantic",
+    "python-dotenv",
 ]
 
 [project.optional-dependencies]

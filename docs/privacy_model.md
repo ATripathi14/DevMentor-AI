@@ -56,7 +56,7 @@ Sanitization runs in `dmrun.py`, immediately after parsing the error and before 
 
 ## Risk Scoring (Fail-Closed Safety Net)
 
-After sanitization, `assess_risk()` performs a second, stricter check on the already-sanitized text. It scans for any remaining long alphanumeric run (16+ characters) that might indicate something slipped through the targeted sanitizers. This threshold is deliberately lower than `sanitize_tokens()`'s 20-character cutoff, erring on the side of caution.
+After sanitization, `assess_risk()` performs a second, stricter check on the already-sanitized text. It flags any remaining alphanumeric run of 16+ characters that contains a digit, which is how most leftover secrets look. Plain letter-only runs are ignored, so ordinary exception names such as `NewConnectionError` do not block legitimate errors. The 16-character threshold is deliberately lower than `sanitize_tokens()`'s 20-character cutoff.
 
 If `assess_risk()` returns `"review"`, the error is **not sent anywhere**. It is reported locally in the terminal with a notice, and the request to the local service is skipped entirely. This is the fail-closed principle in practice: when in doubt, don't send it.
 
@@ -74,3 +74,4 @@ If `assess_risk()` returns `"review"`, the error is **not sent anywhere**. It is
 - `sanitize_tokens()` redacts any identifier of 20+ characters, so some harmless long names are redacted too. Over-redaction is accepted as safer than missing a secret.
 - Regex-based redaction cannot guarantee that every secret is caught. `assess_risk()` is a second net, not a proof.
 - LLM output is generated text and can be wrong. It is labelled as such in the widget.
+- `assess_risk()` only flags 16+ character runs that contain a digit, to avoid blocking ordinary exception names. A secret of 16-19 letters with no digits would pass both `sanitize_tokens()` (20+ characters) and `assess_risk()`.
