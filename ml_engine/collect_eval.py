@@ -32,7 +32,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from client.runner import parse_error
+from core.parsers import parse_any
 from sanitizer.sanitizer import sanitize, assess_risk
 
 
@@ -215,23 +215,21 @@ def process_records(
 
         # Parse traceback.
         try:
-            parsed = parse_error(traceback_text)
+            event = parse_any(traceback_text)
         except Exception as error:
             stats["parse_errors"] += 1
-            print(
-                f"[WARNING] Parser failed for raw record {record_index}: "
-                f"{type(error).__name__}"
-            )
+            print(f"[WARNING] Parser failed for raw record {record_index}: {type(error).__name__}")
             continue
 
-        if (
-            not isinstance(parsed, (tuple, list))
-            or len(parsed) != 2
-        ):
+        if event is None:
             stats["unparsable"] += 1
             continue
 
-        error_type, message = parsed
+        error_type, message = event.exception_type or "", event.message
+
+        if not error_type.strip() or not message.strip():
+            stats["invalid_parse_output"] += 1
+            continue
 
         if (
             not isinstance(error_type, str)

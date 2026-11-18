@@ -1,4 +1,4 @@
-# Model Card: DevMentor AI Error Classifier (v1.0)
+# Model Card: DevMentor AI Error Classifier (v1.1)
 
 ## Overview
 
@@ -50,7 +50,7 @@ Collected from public GitHub issues, sanitized, then labeled by hand using writt
 | | Rows | ML only (macro F1) | ML + rules (macro F1) |
 |---|---|---|---|
 | First run (8 overlap rows still included) | 245 | 0.776 | 0.863 |
-| **Baseline after removing overlap (v1.0)** | 237 | 0.773 | 0.875 |
+| **Baseline after removing overlap (v1.1)** | 237 | 0.773 | 0.875 |
 
 Ambiguous subset (OSError, TimeoutError, ImportError, RuntimeError, Exception, AssertionError, plus all other_error and none_type_error rows), end-to-end: 52 rows, accuracy 0.808. Macro F1 is not reported for this subset, because most categories appear only once or twice in it, which makes the macro average misleading (the script printed 0.299).
 

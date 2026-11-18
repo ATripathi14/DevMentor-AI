@@ -47,3 +47,7 @@ ERROR_TYPE_TO_CATEGORY = {
 def normalize_error_type(raw_error_type: str) -> str:
     """Maps a raw Python exception class name to one of the 12 official category labels."""
     return ERROR_TYPE_TO_CATEGORY.get(raw_error_type, "other_error")
+
+def category_for_event(event) -> str:
+    """Rules-based category for an ErrorEvent (wraps the existing mapping)."""
+    return normalize_error_type(event.exception_type or "")

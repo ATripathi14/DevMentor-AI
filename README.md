@@ -152,7 +152,7 @@ The real-world numbers are the ones to trust. The rules fallback adds about 10 m
 
 ## Project Status
 
-**v1.0: Python-only, local-first.** The core pipeline, privacy layer, ML classifier, widget and optional local LLM mode are complete.
+**v1.1: Python-only, local-first.** The core pipeline, privacy layer, ML classifier, widget and optional local LLM mode are complete.
 
 - [x] Foundation
 - [x] Local MVP (`dmrun`, FastAPI service, floating widget)
@@ -215,7 +215,7 @@ python ml_engine/evaluate_real.py      # score the saved model
 
 ## Roadmap
 
-**v1.0 (current):** Python-only, 132-example generated training set, calibrated Linear SVM classifier, rules fallback, optional local LLM mode via Ollama.
+**v1.1 (current):** Python-only, 132-example generated training set, calibrated Linear SVM classifier, rules fallback, optional local LLM mode via Ollama.
 
 **Direction:** a language-agnostic, tiered system (error codes, templates, an ML cause classifier, optional local LLM) with capture beyond `dmrun`.
 
